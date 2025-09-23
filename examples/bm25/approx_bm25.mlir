@@ -1,4 +1,48 @@
 module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : vector<2xi32>>, #dlti.dl_entry<f80, dense<128> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<272>, dense<64> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<271>, dense<32> : vector<4xi32>>, #dlti.dl_entry<i1, dense<8> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr, dense<64> : vector<4xi32>>, #dlti.dl_entry<i16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i32, dense<32> : vector<2xi32>>, #dlti.dl_entry<i8, dense<8> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<270>, dense<32> : vector<4xi32>>, #dlti.dl_entry<f128, dense<128> : vector<2xi32>>, #dlti.dl_entry<f64, dense<64> : vector<2xi32>>, #dlti.dl_entry<f16, dense<16> : vector<2xi32>>, #dlti.dl_entry<"dlti.stack_alignment", 128 : i32>, #dlti.dl_entry<"dlti.endianness", "little">>, llvm.data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", llvm.target_triple = "x86_64-unknown-linux-gnu", "polygeist.target-cpu" = "x86-64", "polygeist.target-features" = "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87", "polygeist.tune-cpu" = "generic"} {
+  // === Knob 1: TF counting (func_substitute) ================================
+  // Exact func name: tf_count_whole_word
+  // Approx func name present in C: approx_tf_count_whole_word
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "tf_count_whole_word",
+    transform_type = "func_substitute",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 12>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 2>,
+    decisions = array<i32: 0, 1>
+  }> : () -> ()
+  // Required for func_substitute:
+  "approxMLIR.util.annotation.convert_to_call"() <{func_name = "tf_count_whole_word"}> : () -> ()
+
+  // === Knob 2: DF membership test (func_substitute) =========================
+  // Exact func name: df_contains_whole_word
+  // Approx func name present in C: approx_df_contains_whole_word
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "df_contains_whole_word",
+    transform_type = "func_substitute",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 10>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 5>,
+    decisions = array<i32: 1, 0>
+  }> : () -> ()
+  // Required for func_substitute:
+  "approxMLIR.util.annotation.convert_to_call"() <{func_name = "df_contains_whole_word"}> : () -> ()
+
+  // === Knob 3: Per-term scoring loop over documents (loop_perforate) ========
+  // Exact func name: score_term_over_docs
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "score_term_over_docs",
+    transform_type = "loop_perforate",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 1000000>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 207>,      // e.g., perforate when many docs
+    decisions = array<i32: 1, 1>
+  }> : () -> ()
   llvm.mlir.global internal constant @str59("  query string : BM25 query (default \22quick brown fox\22)\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str58("  seed         : RNG seed (default 42)\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str57("  num_docs     : number of documents to generate (default 6)\0A\00") {addr_space = 0 : i32}
@@ -148,7 +192,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : 
     %9 = arith.select %8, %7, %cst : f64
     return %9 : f64
   }
-  func.func @__internal_tf_count_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
+  func.func @tf_count_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
     %true = arith.constant true
     %c1_i32 = arith.constant 1 : i32
     %c8_i32 = arith.constant 8 : i32
@@ -235,28 +279,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : 
     }
     return %6 : i32
   }
-  func.func @tf_count_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c6_i32 = arith.constant 6 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %c0_i32 = arith.constant 0 : i32
-    %0 = arith.cmpi sge, %arg2, %c6_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    %3 = scf.index_switch %2 -> i32 
-    case 0 {
-      %4 = func.call @__internal_tf_count_whole_word(%arg0, %arg1, %arg2) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-      scf.yield %4 : i32
-    }
-    case 1 {
-      %4 = func.call @approx_tf_count_whole_word(%arg0, %arg1, %arg2) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-      scf.yield %4 : i32
-    }
-    default {
-      %4 = func.call @__internal_tf_count_whole_word(%arg0, %arg1, %arg2) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-      scf.yield %4 : i32
-    }
-    return %3 : i32
-  }
   func.func private @strlen(!llvm.ptr) -> i64
   func.func private @strstr(memref<?xi8>, memref<?xi8>) -> memref<?xi8> attributes {llvm.linkage = #llvm.linkage<external>}
   func.func @approx_tf_count_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
@@ -304,7 +326,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : 
     }
     return %6 : i32
   }
-  func.func @__internal_df_contains_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
+  func.func @df_contains_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
     %false = arith.constant false
     %true = arith.constant true
     %c1_i32 = arith.constant 1 : i32
@@ -408,28 +430,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : 
     }
     %7 = arith.select %6#0, %c0_i32, %6#1 : i32
     return %7 : i32
-  }
-  func.func @df_contains_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c4_i32 = arith.constant 4 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %c0_i32 = arith.constant 0 : i32
-    %0 = arith.cmpi sge, %arg2, %c4_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    %3 = scf.index_switch %2 -> i32 
-    case 0 {
-      %4 = func.call @__internal_df_contains_whole_word(%arg0, %arg1, %arg2) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-      scf.yield %4 : i32
-    }
-    case 1 {
-      %4 = func.call @approx_df_contains_whole_word(%arg0, %arg1, %arg2) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-      scf.yield %4 : i32
-    }
-    default {
-      %4 = func.call @__internal_df_contains_whole_word(%arg0, %arg1, %arg2) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-      scf.yield %4 : i32
-    }
-    return %3 : i32
   }
   func.func @approx_df_contains_whole_word(%arg0: memref<?xi8>, %arg1: memref<?xi8>, %arg2: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
     %true = arith.constant true
@@ -577,146 +577,51 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : 
   }
   func.func private @strdup(memref<?xi8>) -> memref<?xi8> attributes {llvm.linkage = #llvm.linkage<external>}
   func.func @score_term_over_docs(%arg0: memref<?xi8>, %arg1: memref<?xmemref<?xi8>>, %arg2: memref<?xf64>, %arg3: f64, %arg4: f64, %arg5: memref<?x!llvm.struct<(i32, f64)>>, %arg6: i32, %arg7: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c2000_i32 = arith.constant 2000 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %c0_i32 = arith.constant 0 : i32
-    %c16_i32 = arith.constant 16 : i32
-    %cst = arith.constant 1.000000e+00 : f64
-    %cst_0 = arith.constant 0.000000e+00 : f64
-    %c16 = arith.constant 16 : index
-    %c1 = arith.constant 1 : index
     %c0 = arith.constant 0 : index
-    %0 = arith.cmpi sge, %arg7, %c2000_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    scf.index_switch %2 
-    case 0 {
-      %3 = arith.index_cast %arg6 : i32 to index
-      scf.for %arg8 = %c0 to %3 step %c1 {
-        %4 = "polygeist.memref2pointer"(%arg0) : (memref<?xi8>) -> !llvm.ptr
-        %5 = func.call @strlen(%4) : (!llvm.ptr) -> i64
-        %6 = arith.trunci %5 : i64 to i32
-        %7 = arith.cmpi sgt, %6, %c16_i32 : i32
-        %8 = arith.select %7, %c16_i32, %6 : i32
-        %9 = memref.load %arg1[%arg8] : memref<?xmemref<?xi8>>
-        %10 = func.call @tf_count_whole_word(%arg0, %9, %8) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-        %11 = arith.sitofp %10 : i32 to f64
-        %12 = memref.get_global @K1 : memref<1xf64>
-        %13 = affine.load %12[0] : memref<1xf64>
-        %14 = arith.addf %13, %cst : f64
-        %15 = arith.mulf %11, %14 : f64
-        %16 = memref.get_global @B : memref<1xf64>
-        %17 = affine.load %16[0] : memref<1xf64>
-        %18 = arith.subf %cst, %17 : f64
-        %19 = memref.load %arg2[%arg8] : memref<?xf64>
-        %20 = arith.divf %19, %arg3 : f64
-        %21 = arith.mulf %17, %20 : f64
-        %22 = arith.addf %18, %21 : f64
-        %23 = arith.mulf %13, %22 : f64
-        %24 = arith.addf %11, %23 : f64
-        %25 = arith.cmpf ogt, %24, %cst_0 : f64
-        %26 = scf.if %25 -> (f64) {
-          %35 = arith.divf %15, %24 : f64
-          scf.yield %35 : f64
-        } else {
-          scf.yield %cst_0 : f64
-        }
-        %27 = arith.mulf %arg4, %26 : f64
-        %28 = arith.muli %arg8, %c16 : index
-        %29 = arith.index_cast %28 : index to i64
-        %30 = "polygeist.memref2pointer"(%arg5) : (memref<?x!llvm.struct<(i32, f64)>>) -> !llvm.ptr
-        %31 = llvm.getelementptr %30[%29] : (!llvm.ptr, i64) -> !llvm.ptr, i8
-        %32 = llvm.getelementptr %31[0, 1] : (!llvm.ptr) -> !llvm.ptr, !llvm.struct<(i32, f64)>
-        %33 = llvm.load %32 : !llvm.ptr -> f64
-        %34 = arith.addf %33, %27 : f64
-        llvm.store %34, %32 : f64, !llvm.ptr
+    %c1 = arith.constant 1 : index
+    %c16 = arith.constant 16 : index
+    %cst = arith.constant 0.000000e+00 : f64
+    %cst_0 = arith.constant 1.000000e+00 : f64
+    %c16_i32 = arith.constant 16 : i32
+    %0 = arith.index_cast %arg6 : i32 to index
+    scf.for %arg8 = %c0 to %0 step %c1 {
+      %1 = "polygeist.memref2pointer"(%arg0) : (memref<?xi8>) -> !llvm.ptr
+      %2 = func.call @strlen(%1) : (!llvm.ptr) -> i64
+      %3 = arith.trunci %2 : i64 to i32
+      %4 = arith.cmpi sgt, %3, %c16_i32 : i32
+      %5 = arith.select %4, %c16_i32, %3 : i32
+      %6 = memref.load %arg1[%arg8] : memref<?xmemref<?xi8>>
+      %7 = func.call @tf_count_whole_word(%arg0, %6, %5) : (memref<?xi8>, memref<?xi8>, i32) -> i32
+      %8 = arith.sitofp %7 : i32 to f64
+      %9 = memref.get_global @K1 : memref<1xf64>
+      %10 = affine.load %9[0] : memref<1xf64>
+      %11 = arith.addf %10, %cst_0 : f64
+      %12 = arith.mulf %8, %11 : f64
+      %13 = memref.get_global @B : memref<1xf64>
+      %14 = affine.load %13[0] : memref<1xf64>
+      %15 = arith.subf %cst_0, %14 : f64
+      %16 = memref.load %arg2[%arg8] : memref<?xf64>
+      %17 = arith.divf %16, %arg3 : f64
+      %18 = arith.mulf %14, %17 : f64
+      %19 = arith.addf %15, %18 : f64
+      %20 = arith.mulf %10, %19 : f64
+      %21 = arith.addf %8, %20 : f64
+      %22 = arith.cmpf ogt, %21, %cst : f64
+      %23 = scf.if %22 -> (f64) {
+        %32 = arith.divf %12, %21 : f64
+        scf.yield %32 : f64
+      } else {
+        scf.yield %cst : f64
       }
-      scf.yield
-    }
-    case 1 {
-      %3 = arith.index_cast %arg6 : i32 to index
-      scf.for %arg8 = %c0 to %3 step %c1 {
-        %4 = "polygeist.memref2pointer"(%arg0) : (memref<?xi8>) -> !llvm.ptr
-        %5 = func.call @strlen(%4) : (!llvm.ptr) -> i64
-        %6 = arith.trunci %5 : i64 to i32
-        %7 = arith.cmpi sgt, %6, %c16_i32 : i32
-        %8 = arith.select %7, %c16_i32, %6 : i32
-        %9 = memref.load %arg1[%arg8] : memref<?xmemref<?xi8>>
-        %10 = func.call @tf_count_whole_word(%arg0, %9, %8) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-        %11 = arith.sitofp %10 : i32 to f64
-        %12 = memref.get_global @K1 : memref<1xf64>
-        %13 = affine.load %12[0] : memref<1xf64>
-        %14 = arith.addf %13, %cst : f64
-        %15 = arith.mulf %11, %14 : f64
-        %16 = memref.get_global @B : memref<1xf64>
-        %17 = affine.load %16[0] : memref<1xf64>
-        %18 = arith.subf %cst, %17 : f64
-        %19 = memref.load %arg2[%arg8] : memref<?xf64>
-        %20 = arith.divf %19, %arg3 : f64
-        %21 = arith.mulf %17, %20 : f64
-        %22 = arith.addf %18, %21 : f64
-        %23 = arith.mulf %13, %22 : f64
-        %24 = arith.addf %11, %23 : f64
-        %25 = arith.cmpf ogt, %24, %cst_0 : f64
-        %26 = scf.if %25 -> (f64) {
-          %35 = arith.divf %15, %24 : f64
-          scf.yield %35 : f64
-        } else {
-          scf.yield %cst_0 : f64
-        }
-        %27 = arith.mulf %arg4, %26 : f64
-        %28 = arith.muli %arg8, %c16 : index
-        %29 = arith.index_cast %28 : index to i64
-        %30 = "polygeist.memref2pointer"(%arg5) : (memref<?x!llvm.struct<(i32, f64)>>) -> !llvm.ptr
-        %31 = llvm.getelementptr %30[%29] : (!llvm.ptr, i64) -> !llvm.ptr, i8
-        %32 = llvm.getelementptr %31[0, 1] : (!llvm.ptr) -> !llvm.ptr, !llvm.struct<(i32, f64)>
-        %33 = llvm.load %32 : !llvm.ptr -> f64
-        %34 = arith.addf %33, %27 : f64
-        llvm.store %34, %32 : f64, !llvm.ptr
-      }
-      scf.yield
-    }
-    default {
-      %3 = arith.index_cast %arg6 : i32 to index
-      scf.for %arg8 = %c0 to %3 step %c1 {
-        %4 = "polygeist.memref2pointer"(%arg0) : (memref<?xi8>) -> !llvm.ptr
-        %5 = func.call @strlen(%4) : (!llvm.ptr) -> i64
-        %6 = arith.trunci %5 : i64 to i32
-        %7 = arith.cmpi sgt, %6, %c16_i32 : i32
-        %8 = arith.select %7, %c16_i32, %6 : i32
-        %9 = memref.load %arg1[%arg8] : memref<?xmemref<?xi8>>
-        %10 = func.call @tf_count_whole_word(%arg0, %9, %8) : (memref<?xi8>, memref<?xi8>, i32) -> i32
-        %11 = arith.sitofp %10 : i32 to f64
-        %12 = memref.get_global @K1 : memref<1xf64>
-        %13 = affine.load %12[0] : memref<1xf64>
-        %14 = arith.addf %13, %cst : f64
-        %15 = arith.mulf %11, %14 : f64
-        %16 = memref.get_global @B : memref<1xf64>
-        %17 = affine.load %16[0] : memref<1xf64>
-        %18 = arith.subf %cst, %17 : f64
-        %19 = memref.load %arg2[%arg8] : memref<?xf64>
-        %20 = arith.divf %19, %arg3 : f64
-        %21 = arith.mulf %17, %20 : f64
-        %22 = arith.addf %18, %21 : f64
-        %23 = arith.mulf %13, %22 : f64
-        %24 = arith.addf %11, %23 : f64
-        %25 = arith.cmpf ogt, %24, %cst_0 : f64
-        %26 = scf.if %25 -> (f64) {
-          %35 = arith.divf %15, %24 : f64
-          scf.yield %35 : f64
-        } else {
-          scf.yield %cst_0 : f64
-        }
-        %27 = arith.mulf %arg4, %26 : f64
-        %28 = arith.muli %arg8, %c16 : index
-        %29 = arith.index_cast %28 : index to i64
-        %30 = "polygeist.memref2pointer"(%arg5) : (memref<?x!llvm.struct<(i32, f64)>>) -> !llvm.ptr
-        %31 = llvm.getelementptr %30[%29] : (!llvm.ptr, i64) -> !llvm.ptr, i8
-        %32 = llvm.getelementptr %31[0, 1] : (!llvm.ptr) -> !llvm.ptr, !llvm.struct<(i32, f64)>
-        %33 = llvm.load %32 : !llvm.ptr -> f64
-        %34 = arith.addf %33, %27 : f64
-        llvm.store %34, %32 : f64, !llvm.ptr
-      }
+      %24 = arith.mulf %arg4, %23 : f64
+      %25 = arith.muli %arg8, %c16 : index
+      %26 = arith.index_cast %25 : index to i64
+      %27 = "polygeist.memref2pointer"(%arg5) : (memref<?x!llvm.struct<(i32, f64)>>) -> !llvm.ptr
+      %28 = llvm.getelementptr %27[%26] : (!llvm.ptr, i64) -> !llvm.ptr, i8
+      %29 = llvm.getelementptr %28[0, 1] : (!llvm.ptr) -> !llvm.ptr, !llvm.struct<(i32, f64)>
+      %30 = llvm.load %29 : !llvm.ptr -> f64
+      %31 = arith.addf %30, %24 : f64
+      llvm.store %31, %29 : f64, !llvm.ptr
     }
     return
   }
@@ -1493,4 +1398,3 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i64, dense<64> : 
   func.func private @strtoul(memref<?xi8>, memref<?xmemref<?xi8>>, i32) -> i64 attributes {llvm.linkage = #llvm.linkage<external>}
   func.func private @clock_gettime(i32, memref<?x2xi64>) -> i32 attributes {llvm.linkage = #llvm.linkage<external>}
 }
-
