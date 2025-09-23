@@ -211,6 +211,12 @@ class PetaBricksInterface(MeasurementInterface):
                 return False
         return True
 
+    def run_exec(self):
+        run_cmd = []
+        run_result = self.call_program(run_cmd)
+        assert run_result["returncode"] == 0, run_result.get("stderr", "")
+        return run_result
+
     def run(self, desired_result, input, limit):
         """
         Scope: environment dependent
@@ -258,10 +264,12 @@ class PetaBricksInterface(MeasurementInterface):
         ]
 
         run_result = self.call_program(cmd)
-
+        print("run_result", run_result)
         result = opentuner.resultsdb.models.Result()
 
-        print("run_result: ", run_result)
+        # run .exec
+        run_result = self.run_exec()
+
         output = run_result["stdout"].decode("utf-8")
         time, out = parse_pr_data(output)
 

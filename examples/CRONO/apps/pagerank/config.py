@@ -13,10 +13,10 @@ def config(config_file="pagerank.settings"):
 
     # Set global environment variables
     os.environ["BENCH"] = "blackscholes"
-    os.environ["ROOT"] = "/Users/yi/Desktop/PolygeistSample"
+    os.environ["ROOT"] = "/home/yimu3/PolygeistSample"
 
     # Add the project root to Python path
-    sys.path.insert(0, "/Users/yi/Desktop/approxMLIRTuner")
+    sys.path.insert(0, "/home/yimu3/approxMLIRTuner")
     accuracy = np.linspace(0.6, 1.0, 4)
     for acc in accuracy:
         print("Accuracy: ", acc)
@@ -26,7 +26,7 @@ def config(config_file="pagerank.settings"):
             json.dump({"accuracy": acc}, f)
         # run the pagerank program
         os.system(
-            f"PYTHONPATH=/Users/yi/Desktop/approxMLIRTuner python tuner.py pagerank --mlir-file /Users/yi/Desktop/PolygeistSample/tools/cgeist/Test/approxMLIR/approx_blackscholes.mlir --database opentuner.db --stop-after=1200"
+            f"PYTHONPATH=/home/yimu3/approxMLIRTuner python tuner.py pagerank --mlir-file /Users/yi/Desktop/PolygeistSample/tools/cgeist/Test/approxMLIR/approx_blackscholes.mlir --database opentuner.db --stop-after=1200"
         )
 
 
