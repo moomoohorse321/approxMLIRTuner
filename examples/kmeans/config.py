@@ -1,4 +1,5 @@
-def config(config_file="bm25.settings"):
+from paths import TUNER, ROOT, BENCH
+def config(config_file=f"{BENCH}.settings"):
     """
     An example of *.settings
     {
@@ -12,11 +13,11 @@ def config(config_file="bm25.settings"):
     import sys
 
     # Set global environment variables
-    os.environ["BENCH"] = "kmeans"
-    os.environ["ROOT"] = "/home/yimu3/PolygeistSample"
+    os.environ["BENCH"] = BENCH
+    os.environ["ROOT"] = ROOT
 
     # Add the project root to Python path
-    sys.path.insert(0, "/home/yimu3/approxMLIRTuner")
+    sys.path.insert(0, TUNER)
     accuracy = np.linspace(0.6, 1.0, 4)
     for acc in accuracy:
         print("Accuracy: ", acc)
@@ -25,7 +26,7 @@ def config(config_file="bm25.settings"):
 
             json.dump({"accuracy": acc}, f)
         os.system(
-            f"PYTHONPATH=/home/yimu3/approxMLIRTuner python tuner.py kmeans --mlir-file /home/yimu3/approxMLIRTuner/examples/kmeans/approx_kmeans.mlir --database opentuner.db --stop-after=1200"
+            f"PYTHONPATH={TUNER} python tuner.py {BENCH} --mlir-file {TUNER}/examples/{BENCH}/approx_{BENCH}.mlir --database opentuner.db --stop-after=1200"
         )
 
 

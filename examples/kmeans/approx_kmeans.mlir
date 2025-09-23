@@ -1,4 +1,42 @@
 module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : vector<2xi32>>, #dlti.dl_entry<f128, dense<128> : vector<2xi32>>, #dlti.dl_entry<f64, dense<64> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<270>, dense<32> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<271>, dense<32> : vector<4xi32>>, #dlti.dl_entry<i8, dense<8> : vector<2xi32>>, #dlti.dl_entry<i16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i32, dense<32> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr, dense<64> : vector<4xi32>>, #dlti.dl_entry<i1, dense<8> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<272>, dense<64> : vector<4xi32>>, #dlti.dl_entry<i64, dense<64> : vector<2xi32>>, #dlti.dl_entry<f80, dense<128> : vector<2xi32>>, #dlti.dl_entry<"dlti.endianness", "little">, #dlti.dl_entry<"dlti.stack_alignment", 128 : i32>>, llvm.data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", llvm.target_triple = "x86_64-unknown-linux-gnu", "polygeist.target-cpu" = "x86-64", "polygeist.target-features" = "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87", "polygeist.tune-cpu" = "generic"} {
+
+  // Knob — distance computation (func_substitute)
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "compute_distance_sq",
+    transform_type = "func_substitute",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 64>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 0>,
+    decisions = array<i32: 1, 0>
+  }> : () -> ()
+  // Required for func_substitute
+  "approxMLIR.util.annotation.convert_to_call"() <{func_name = "compute_distance_sq"}> : () -> ()
+
+  // Knob — choosing nearest centroid (loop_perforate over centroids)
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "choose_cluster",
+    transform_type = "loop_perforate",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 16>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 3>,
+    decisions = array<i32: 0, 1>
+  }> : () -> ()
+
+  // Knob — assigning points & accumulating (loop_perforate over points)
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "assign_points_and_accumulate",
+    transform_type = "loop_perforate",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 2000000>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 1>,
+    decisions = array<i32: 0, 0>
+  }> : () -> ()
   llvm.mlir.global internal constant @str22("\0AK-means completed in %.3f seconds\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str21("  Max iterations: %d\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str20("  Clusters: %d\0A\00") {addr_space = 0 : i32}
@@ -24,7 +62,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
   llvm.mlir.global internal constant @str0("Final centroids:\0A\00") {addr_space = 0 : i32}
   llvm.func @printf(!llvm.ptr, ...) -> i32
   memref.global @seed : memref<1xi32> = dense<42>
-  func.func @__internal_compute_distance_sq(%arg0: memref<?xf64>, %arg1: memref<?xf64>, %arg2: i32, %arg3: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
+  func.func @compute_distance_sq(%arg0: memref<?xf64>, %arg1: memref<?xf64>, %arg2: i32, %arg3: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
     %c1 = arith.constant 1 : index
     %cst = arith.constant 0.000000e+00 : f64
@@ -38,28 +76,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
       scf.yield %6 : f64
     }
     return %1 : f64
-  }
-  func.func @compute_distance_sq(%arg0: memref<?xf64>, %arg1: memref<?xf64>, %arg2: i32, %arg3: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c58_i32 = arith.constant 58 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %c0_i32 = arith.constant 0 : i32
-    %0 = arith.cmpi sge, %arg3, %c58_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    %3 = scf.index_switch %2 -> f64 
-    case 0 {
-      %4 = func.call @__internal_compute_distance_sq(%arg0, %arg1, %arg2, %arg3) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
-      scf.yield %4 : f64
-    }
-    case 1 {
-      %4 = func.call @__internal_compute_distance_sq(%arg0, %arg1, %arg2, %arg3) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
-      scf.yield %4 : f64
-    }
-    default {
-      %4 = func.call @__internal_compute_distance_sq(%arg0, %arg1, %arg2, %arg3) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
-      scf.yield %4 : f64
-    }
-    return %3 : f64
   }
   func.func @approx_compute_distance_sq(%arg0: memref<?xf64>, %arg1: memref<?xf64>, %arg2: i32, %arg3: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
@@ -86,56 +102,21 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     return %3 : f64
   }
   func.func @choose_cluster(%arg0: memref<?xf64>, %arg1: memref<?xmemref<?xf64>>, %arg2: i32, %arg3: i32, %arg4: i32, %arg5: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c7_i32 = arith.constant 7 : i32
-    %c1_i32 = arith.constant 1 : i32
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
     %c0_i32 = arith.constant 0 : i32
     %cst = arith.constant 1.7976931348623157E+308 : f64
-    %c1 = arith.constant 1 : index
-    %c0 = arith.constant 0 : index
-    %0 = arith.cmpi sge, %arg5, %c7_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    %3 = scf.index_switch %2 -> i32 
-    case 0 {
-      %4 = arith.index_cast %arg2 : i32 to index
-      %5:2 = scf.for %arg6 = %c0 to %4 step %c1 iter_args(%arg7 = %c0_i32, %arg8 = %cst) -> (i32, f64) {
-        %6 = arith.index_cast %arg6 : index to i32
-        %7 = memref.load %arg1[%arg6] : memref<?xmemref<?xf64>>
-        %8 = func.call @compute_distance_sq(%arg0, %7, %arg3, %arg4) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
-        %9 = arith.cmpf olt, %8, %arg8 : f64
-        %10 = arith.select %9, %6, %arg7 : i32
-        %11 = arith.select %9, %8, %arg8 : f64
-        scf.yield %10, %11 : i32, f64
-      }
-      scf.yield %5#0 : i32
+    %0 = arith.index_cast %arg2 : i32 to index
+    %1:2 = scf.for %arg6 = %c0 to %0 step %c1 iter_args(%arg7 = %c0_i32, %arg8 = %cst) -> (i32, f64) {
+      %2 = arith.index_cast %arg6 : index to i32
+      %3 = memref.load %arg1[%arg6] : memref<?xmemref<?xf64>>
+      %4 = func.call @compute_distance_sq(%arg0, %3, %arg3, %arg4) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
+      %5 = arith.cmpf olt, %4, %arg8 : f64
+      %6 = arith.select %5, %2, %arg7 : i32
+      %7 = arith.select %5, %4, %arg8 : f64
+      scf.yield %6, %7 : i32, f64
     }
-    case 1 {
-      %4 = arith.index_cast %arg2 : i32 to index
-      %5:2 = scf.for %arg6 = %c0 to %4 step %c1 iter_args(%arg7 = %c0_i32, %arg8 = %cst) -> (i32, f64) {
-        %6 = arith.index_cast %arg6 : index to i32
-        %7 = memref.load %arg1[%arg6] : memref<?xmemref<?xf64>>
-        %8 = func.call @compute_distance_sq(%arg0, %7, %arg3, %arg4) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
-        %9 = arith.cmpf olt, %8, %arg8 : f64
-        %10 = arith.select %9, %6, %arg7 : i32
-        %11 = arith.select %9, %8, %arg8 : f64
-        scf.yield %10, %11 : i32, f64
-      }
-      scf.yield %5#0 : i32
-    }
-    default {
-      %4 = arith.index_cast %arg2 : i32 to index
-      %5:2 = scf.for %arg6 = %c0 to %4 step %c1 iter_args(%arg7 = %c0_i32, %arg8 = %cst) -> (i32, f64) {
-        %6 = arith.index_cast %arg6 : index to i32
-        %7 = memref.load %arg1[%arg6] : memref<?xmemref<?xf64>>
-        %8 = func.call @compute_distance_sq(%arg0, %7, %arg3, %arg4) : (memref<?xf64>, memref<?xf64>, i32, i32) -> f64
-        %9 = arith.cmpf olt, %8, %arg8 : f64
-        %10 = arith.select %9, %6, %arg7 : i32
-        %11 = arith.select %9, %8, %arg8 : f64
-        scf.yield %10, %11 : i32, f64
-      }
-      scf.yield %5#0 : i32
-    }
-    return %3 : i32
+    return %1#0 : i32
   }
   func.func @reset_accumulators(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xi32>, %arg2: i32, %arg3: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
@@ -154,78 +135,26 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     return
   }
   func.func @assign_points_and_accumulate(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xmemref<?xf64>>, %arg2: memref<?xi32>, %arg3: memref<?xi32>, %arg4: memref<?xmemref<?xf64>>, %arg5: i32, %arg6: i32, %arg7: i32, %arg8: i32, %arg9: i32, %arg10: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c403_i32 = arith.constant 403 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %c0_i32 = arith.constant 0 : i32
-    %c1 = arith.constant 1 : index
     %c0 = arith.constant 0 : index
-    %0 = arith.cmpi sge, %arg10, %c403_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    scf.index_switch %2 
-    case 0 {
-      %3 = arith.index_cast %arg5 : i32 to index
-      scf.for %arg11 = %c0 to %3 step %c1 {
-        %4 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-        %5 = func.call @choose_cluster(%4, %arg1, %arg7, %arg6, %arg8, %arg9) : (memref<?xf64>, memref<?xmemref<?xf64>>, i32, i32, i32, i32) -> i32
-        memref.store %5, %arg2[%arg11] : memref<?xi32>
-        %6 = arith.index_cast %5 : i32 to index
-        %7 = memref.load %arg3[%6] : memref<?xi32>
-        %8 = arith.addi %7, %c1_i32 : i32
-        memref.store %8, %arg3[%6] : memref<?xi32>
-        %9 = arith.index_cast %arg6 : i32 to index
-        scf.for %arg12 = %c0 to %9 step %c1 {
-          %10 = memref.load %arg4[%6] : memref<?xmemref<?xf64>>
-          %11 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-          %12 = memref.load %11[%arg12] : memref<?xf64>
-          %13 = memref.load %10[%arg12] : memref<?xf64>
-          %14 = arith.addf %13, %12 : f64
-          memref.store %14, %10[%arg12] : memref<?xf64>
-        }
-      }
-      scf.yield
-    }
-    case 1 {
-      %3 = arith.index_cast %arg5 : i32 to index
-      scf.for %arg11 = %c0 to %3 step %c1 {
-        %4 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-        %5 = func.call @choose_cluster(%4, %arg1, %arg7, %arg6, %arg8, %arg9) : (memref<?xf64>, memref<?xmemref<?xf64>>, i32, i32, i32, i32) -> i32
-        memref.store %5, %arg2[%arg11] : memref<?xi32>
-        %6 = arith.index_cast %5 : i32 to index
-        %7 = memref.load %arg3[%6] : memref<?xi32>
-        %8 = arith.addi %7, %c1_i32 : i32
-        memref.store %8, %arg3[%6] : memref<?xi32>
-        %9 = arith.index_cast %arg6 : i32 to index
-        scf.for %arg12 = %c0 to %9 step %c1 {
-          %10 = memref.load %arg4[%6] : memref<?xmemref<?xf64>>
-          %11 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-          %12 = memref.load %11[%arg12] : memref<?xf64>
-          %13 = memref.load %10[%arg12] : memref<?xf64>
-          %14 = arith.addf %13, %12 : f64
-          memref.store %14, %10[%arg12] : memref<?xf64>
-        }
-      }
-      scf.yield
-    }
-    default {
-      %3 = arith.index_cast %arg5 : i32 to index
-      scf.for %arg11 = %c0 to %3 step %c1 {
-        %4 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-        %5 = func.call @choose_cluster(%4, %arg1, %arg7, %arg6, %arg8, %arg9) : (memref<?xf64>, memref<?xmemref<?xf64>>, i32, i32, i32, i32) -> i32
-        memref.store %5, %arg2[%arg11] : memref<?xi32>
-        %6 = arith.index_cast %5 : i32 to index
-        %7 = memref.load %arg3[%6] : memref<?xi32>
-        %8 = arith.addi %7, %c1_i32 : i32
-        memref.store %8, %arg3[%6] : memref<?xi32>
-        %9 = arith.index_cast %arg6 : i32 to index
-        scf.for %arg12 = %c0 to %9 step %c1 {
-          %10 = memref.load %arg4[%6] : memref<?xmemref<?xf64>>
-          %11 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-          %12 = memref.load %11[%arg12] : memref<?xf64>
-          %13 = memref.load %10[%arg12] : memref<?xf64>
-          %14 = arith.addf %13, %12 : f64
-          memref.store %14, %10[%arg12] : memref<?xf64>
-        }
+    %c1 = arith.constant 1 : index
+    %c1_i32 = arith.constant 1 : i32
+    %0 = arith.index_cast %arg5 : i32 to index
+    scf.for %arg11 = %c0 to %0 step %c1 {
+      %1 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
+      %2 = func.call @choose_cluster(%1, %arg1, %arg7, %arg6, %arg8, %arg9) : (memref<?xf64>, memref<?xmemref<?xf64>>, i32, i32, i32, i32) -> i32
+      memref.store %2, %arg2[%arg11] : memref<?xi32>
+      %3 = arith.index_cast %2 : i32 to index
+      %4 = memref.load %arg3[%3] : memref<?xi32>
+      %5 = arith.addi %4, %c1_i32 : i32
+      memref.store %5, %arg3[%3] : memref<?xi32>
+      %6 = arith.index_cast %arg6 : i32 to index
+      scf.for %arg12 = %c0 to %6 step %c1 {
+        %7 = memref.load %arg4[%3] : memref<?xmemref<?xf64>>
+        %8 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
+        %9 = memref.load %8[%arg12] : memref<?xf64>
+        %10 = memref.load %7[%arg12] : memref<?xf64>
+        %11 = arith.addf %10, %9 : f64
+        memref.store %11, %7[%arg12] : memref<?xf64>
       }
     }
     return
@@ -724,4 +653,3 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
   func.func private @atoi(memref<?xi8>) -> i32 attributes {llvm.linkage = #llvm.linkage<external>}
   func.func private @clock() -> i64 attributes {llvm.linkage = #llvm.linkage<external>}
 }
-
