@@ -1,13 +1,54 @@
-module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i32, dense<32> : vector<2xi32>>, #dlti.dl_entry<i1, dense<8> : vector<2xi32>>, #dlti.dl_entry<i8, dense<8> : vector<2xi32>>, #dlti.dl_entry<f128, dense<128> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<270>, dense<32> : vector<4xi32>>, #dlti.dl_entry<f64, dense<64> : vector<2xi32>>, #dlti.dl_entry<f16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i64, dense<64> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<271>, dense<32> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<272>, dense<64> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr, dense<64> : vector<4xi32>>, #dlti.dl_entry<f80, dense<128> : vector<2xi32>>, #dlti.dl_entry<"dlti.endianness", "little">, #dlti.dl_entry<"dlti.stack_alignment", 128 : i32>>, llvm.data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", llvm.target_triple = "x86_64-unknown-linux-gnu", "polygeist.target-cpu" = "x86-64", "polygeist.target-features" = "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87", "polygeist.tune-cpu" = "generic"} {
-  llvm.mlir.global internal constant @str22("%zu %d %.17g %.17g %.17g %.17g %.17g %.17g\0A\00") {addr_space = 0 : i32}
-  llvm.mlir.global internal constant @str21("# idx otype sptprice strike rate volatility otime price\0A\00") {addr_space = 0 : i32}
-  llvm.mlir.global internal constant @str20("fopen text dump failed\00") {addr_space = 0 : i32}
-  llvm.mlir.global internal constant @str19("w\00") {addr_space = 0 : i32}
-  llvm.mlir.global internal constant @str18("%s\0A\00") {addr_space = 0 : i32}
+module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i8, dense<8> : vector<2xi32>>, #dlti.dl_entry<i16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i32, dense<32> : vector<2xi32>>, #dlti.dl_entry<f16, dense<16> : vector<2xi32>>, #dlti.dl_entry<f128, dense<128> : vector<2xi32>>, #dlti.dl_entry<f64, dense<64> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<270>, dense<32> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<271>, dense<32> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<272>, dense<64> : vector<4xi32>>, #dlti.dl_entry<i64, dense<64> : vector<2xi32>>, #dlti.dl_entry<f80, dense<128> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr, dense<64> : vector<4xi32>>, #dlti.dl_entry<i1, dense<8> : vector<2xi32>>, #dlti.dl_entry<"dlti.endianness", "little">, #dlti.dl_entry<"dlti.stack_alignment", 128 : i32>>, llvm.data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", llvm.target_triple = "x86_64-unknown-linux-gnu", "polygeist.target-cpu" = "x86-64", "polygeist.target-features" = "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87", "polygeist.tune-cpu" = "generic"} {
+  // Knob — CNDF substitution (proper func_substitute)
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "compute_cndf",
+    transform_type = "func_substitute",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 2>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 0>,
+    decisions = array<i32: 1, 1>
+  }> : () -> ()
+
+
+  // Required for func_substitute
+  "approxMLIR.util.annotation.convert_to_call"() <{func_name = "compute_cndf"}> : () -> ()
+
+  // Knob — Black-Scholes approximation (func_substitute)
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "BlkSchlsEqEuroNoDiv",
+    transform_type = "func_substitute",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 2>,
+    thresholds_lowers = array<i32: 0>,
+    decision_values = array<i32: 0, 1>,
+    thresholds = array<i32: 0>,
+    decisions = array<i32: 0, 0>
+  }> : () -> ()
+
+  // Required for func_substitute
+  "approxMLIR.util.annotation.convert_to_call"() <{func_name = "BlkSchlsEqEuroNoDiv"}> : () -> ()
+  llvm.mlir.global internal constant @str33("%zu %d %.17g %.17g %.17g %.17g %.17g %.17g\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str32("# idx otype sptprice strike rate volatility otime price\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str31("fopen text dump failed\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str30("w\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str29("%s\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global external @stderr() {addr_space = 0 : i32} : memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>
   llvm.func @fprintf(!llvm.ptr, !llvm.ptr, ...) -> i32
-  llvm.mlir.global internal constant @str17(".txt\00") {addr_space = 0 : i32}
-  llvm.mlir.global internal constant @str16("alloc txtPath failed\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str28(".txt\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str27("alloc txtPath failed\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str26("------------------------------------------------------------------------------------------------\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str25("%3zu | %13.6f | %13.6f | %13.6f | %13.6f | %13.6f | %12.6f\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str24("----|---------------|---------------|---------------|---------------|---------------|--------------\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str23("  # |       S       |       K       |     Rate      |      Vol      |     Time      |    Price\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str22("\0A--- First 20 Option Prices ---\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str21("      Max Price: %12.6f\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str20("      Min Price: %12.6f\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str19("  Average Price: %12.6f\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str18("\0A--- Price Statistics ---\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str17("Number of options: %zu\0A\00") {addr_space = 0 : i32}
+  llvm.mlir.global internal constant @str16("\0A--- Black-Scholes Results ---\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str15("alloc prices failed\00") {addr_space = 0 : i32}
   memref.global @prices : memref<1xmemref<?xf64>> = uninitialized
   memref.global @otime : memref<1xmemref<?xf64>> = uninitialized
@@ -132,7 +173,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     %0 = llvm.mlir.addressof @stderr : !llvm.ptr
     %1 = llvm.load %0 : !llvm.ptr -> memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>
     %2 = "polygeist.memref2pointer"(%1) : (memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>) -> !llvm.ptr
-    %3 = llvm.mlir.addressof @str18 : !llvm.ptr
+    %3 = llvm.mlir.addressof @str29 : !llvm.ptr
     %4 = llvm.getelementptr %3[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<4 x i8>
     %5 = "polygeist.memref2pointer"(%arg0) : (memref<?xi8>) -> !llvm.ptr
     %6 = llvm.call @fprintf(%2, %4, %5) vararg(!llvm.func<i32 (ptr, ptr, ...)>) : (!llvm.ptr, !llvm.ptr, !llvm.ptr) -> i32
@@ -405,7 +446,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     }
     return
   }
-  func.func @__internal_compute_cndf(%arg0: f64, %arg1: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
+  func.func @compute_cndf(%arg0: f64, %arg1: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
     %0 = memref.get_global @zero : memref<1xf64>
     %1 = affine.load %0[0] : memref<1xf64>
     %2 = arith.cmpf olt, %arg0, %1 : f64
@@ -469,27 +510,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
       scf.yield %48 : f64
     }
     return %49 : f64
-  }
-  func.func @compute_cndf(%arg0: f64, %arg1: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c0_i32 = arith.constant 0 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %0 = arith.cmpi sge, %arg1, %c0_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    %3 = scf.index_switch %2 -> f64 
-    case 0 {
-      %4 = func.call @__internal_compute_cndf(%arg0, %arg1) : (f64, i32) -> f64
-      scf.yield %4 : f64
-    }
-    case 1 {
-      %4 = func.call @__internal_compute_cndf(%arg0, %arg1) : (f64, i32) -> f64
-      scf.yield %4 : f64
-    }
-    default {
-      %4 = func.call @__internal_compute_cndf(%arg0, %arg1) : (f64, i32) -> f64
-      scf.yield %4 : f64
-    }
-    return %3 : f64
   }
   func.func @approx_compute_cndf(%arg0: f64, %arg1: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
     %0 = memref.get_global @zero : memref<1xf64>
@@ -678,6 +698,9 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     %c8_i64 = arith.constant 8 : i64
     %c5 = arith.constant 5 : index
     %c5_i64 = arith.constant 5 : i64
+    %c20_i64 = arith.constant 20 : i64
+    %cst = arith.constant 0.000000e+00 : f64
+    %c0_i64 = arith.constant 0 : i64
     %c0_i32 = arith.constant 0 : i32
     %c0_i8 = arith.constant 0 : i8
     %c1_i32 = arith.constant 1 : i32
@@ -786,9 +809,9 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
       %32 = llvm.mlir.zero : !llvm.ptr
       %33 = llvm.icmp "eq" %31, %32 : !llvm.ptr
       scf.if %33 {
-        %89 = llvm.mlir.addressof @str15 : !llvm.ptr
-        %90 = "polygeist.pointer2memref"(%89) : (!llvm.ptr) -> memref<?xi8>
-        func.call @die(%90) : (memref<?xi8>) -> ()
+        %117 = llvm.mlir.addressof @str15 : !llvm.ptr
+        %118 = "polygeist.pointer2memref"(%117) : (!llvm.ptr) -> memref<?xi8>
+        func.call @die(%118) : (memref<?xi8>) -> ()
       }
       %34 = memref.get_global @prices : memref<1xmemref<?xf64>>
       %35 = affine.load %34[0] : memref<1xmemref<?xf64>>
@@ -798,9 +821,9 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
       %39 = arith.muli %38, %c8_i64 : i64
       %40 = arith.index_cast %39 : i64 to index
       scf.for %arg2 = %c0 to %40 step %c1 {
-        %89 = arith.index_cast %arg2 : index to i32
-        %90 = llvm.getelementptr %36[%89] : (!llvm.ptr, i32) -> !llvm.ptr, i8
-        llvm.store %c0_i8, %90 : i8, !llvm.ptr
+        %117 = arith.index_cast %arg2 : index to i32
+        %118 = llvm.getelementptr %36[%117] : (!llvm.ptr, i32) -> !llvm.ptr, i8
+        llvm.store %c0_i8, %118 : i8, !llvm.ptr
       }
       %41 = func.call @bs_thread() : () -> i32
       %42 = affine.load %alloca_0[] : memref<memref<?xi8>>
@@ -811,90 +834,186 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
       %47 = memref.get_global @numOptions : memref<1xi64>
       %48 = affine.load %47[0] : memref<1xi64>
       func.call @writeQualityFile(%42, %46, %c0_i32, %48) : (memref<?xi8>, memref<?xi8>, i32, i64) -> ()
-      %49 = "polygeist.memref2pointer"(%42) : (memref<?xi8>) -> !llvm.ptr
-      %50 = func.call @strlen(%49) : (!llvm.ptr) -> i64
-      %51 = arith.addi %50, %c5_i64 : i64
-      %52 = arith.index_cast %51 : i64 to index
-      %alloc_12 = memref.alloc(%52) : memref<?xi8>
-      %53 = "polygeist.memref2pointer"(%alloc_12) : (memref<?xi8>) -> !llvm.ptr
-      %54 = llvm.mlir.zero : !llvm.ptr
-      %55 = llvm.icmp "eq" %53, %54 : !llvm.ptr
-      scf.if %55 {
-        %89 = llvm.mlir.addressof @str16 : !llvm.ptr
-        %90 = "polygeist.pointer2memref"(%89) : (!llvm.ptr) -> memref<?xi8>
-        func.call @die(%90) : (memref<?xi8>) -> ()
+      %49 = llvm.mlir.addressof @str16 : !llvm.ptr
+      %50 = llvm.getelementptr %49[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<32 x i8>
+      %51 = llvm.call @printf(%50) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32
+      %52 = llvm.mlir.addressof @str17 : !llvm.ptr
+      %53 = llvm.getelementptr %52[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<24 x i8>
+      %54 = memref.get_global @numOptions : memref<1xi64>
+      %55 = affine.load %54[0] : memref<1xi64>
+      %56 = llvm.call @printf(%53, %55) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, i64) -> i32
+      %57 = memref.get_global @numOptions : memref<1xi64>
+      %58 = affine.load %57[0] : memref<1xi64>
+      %59 = arith.cmpi sgt, %58, %c0_i64 : i64
+      scf.if %59 {
+        %117 = memref.get_global @prices : memref<1xmemref<?xf64>>
+        %118 = affine.load %117[0] : memref<1xmemref<?xf64>>
+        %119 = affine.load %118[0] : memref<?xf64>
+        %120 = memref.get_global @prices : memref<1xmemref<?xf64>>
+        %121 = affine.load %120[0] : memref<1xmemref<?xf64>>
+        %122 = affine.load %121[0] : memref<?xf64>
+        %123 = arith.index_cast %58 : i64 to index
+        %124:3 = scf.for %arg2 = %c0 to %123 step %c1 iter_args(%arg3 = %cst, %arg4 = %122, %arg5 = %119) -> (f64, f64, f64) {
+          %139 = memref.get_global @prices : memref<1xmemref<?xf64>>
+          %140 = affine.load %139[0] : memref<1xmemref<?xf64>>
+          %141 = memref.load %140[%arg2] : memref<?xf64>
+          %142 = arith.cmpf olt, %141, %arg5 : f64
+          %143 = scf.if %142 -> (f64) {
+            %147 = memref.load %140[%arg2] : memref<?xf64>
+            scf.yield %147 : f64
+          } else {
+            scf.yield %arg5 : f64
+          }
+          %144 = arith.cmpf ogt, %141, %arg4 : f64
+          %145 = scf.if %144 -> (f64) {
+            %147 = memref.load %140[%arg2] : memref<?xf64>
+            scf.yield %147 : f64
+          } else {
+            scf.yield %arg4 : f64
+          }
+          %146 = arith.addf %arg3, %141 : f64
+          scf.yield %146, %145, %143 : f64, f64, f64
+        }
+        %125 = llvm.mlir.addressof @str18 : !llvm.ptr
+        %126 = llvm.getelementptr %125[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<27 x i8>
+        %127 = llvm.call @printf(%126) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32
+        %128 = llvm.mlir.addressof @str19 : !llvm.ptr
+        %129 = llvm.getelementptr %128[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<25 x i8>
+        %130 = arith.sitofp %58 : i64 to f64
+        %131 = arith.divf %124#0, %130 : f64
+        %132 = llvm.call @printf(%129, %131) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, f64) -> i32
+        %133 = llvm.mlir.addressof @str20 : !llvm.ptr
+        %134 = llvm.getelementptr %133[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<25 x i8>
+        %135 = llvm.call @printf(%134, %124#2) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, f64) -> i32
+        %136 = llvm.mlir.addressof @str21 : !llvm.ptr
+        %137 = llvm.getelementptr %136[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<25 x i8>
+        %138 = llvm.call @printf(%137, %124#1) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, f64) -> i32
       }
-      %56 = arith.index_cast %50 : i64 to index
-      scf.for %arg2 = %c0 to %56 step %c1 {
-        %89 = memref.load %42[%arg2] : memref<?xi8>
-        memref.store %89, %alloc_12[%arg2] : memref<?xi8>
+      %60 = llvm.mlir.addressof @str22 : !llvm.ptr
+      %61 = llvm.getelementptr %60[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<33 x i8>
+      %62 = llvm.call @printf(%61) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32
+      %63 = llvm.mlir.addressof @str23 : !llvm.ptr
+      %64 = llvm.getelementptr %63[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<96 x i8>
+      %65 = llvm.call @printf(%64) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32
+      %66 = llvm.mlir.addressof @str24 : !llvm.ptr
+      %67 = llvm.getelementptr %66[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<101 x i8>
+      %68 = llvm.call @printf(%67) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32
+      %69 = memref.get_global @numOptions : memref<1xi64>
+      %70 = affine.load %69[0] : memref<1xi64>
+      %71 = arith.cmpi slt, %70, %c20_i64 : i64
+      %72 = arith.select %71, %70, %c20_i64 : i64
+      %73 = arith.index_cast %72 : i64 to index
+      scf.for %arg2 = %c0 to %73 step %c1 {
+        %117 = arith.index_cast %arg2 : index to i64
+        %118 = llvm.mlir.addressof @str25 : !llvm.ptr
+        %119 = llvm.getelementptr %118[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<60 x i8>
+        %120 = memref.get_global @sptprice : memref<1xmemref<?xf64>>
+        %121 = affine.load %120[0] : memref<1xmemref<?xf64>>
+        %122 = memref.load %121[%arg2] : memref<?xf64>
+        %123 = memref.get_global @strike : memref<1xmemref<?xf64>>
+        %124 = affine.load %123[0] : memref<1xmemref<?xf64>>
+        %125 = memref.load %124[%arg2] : memref<?xf64>
+        %126 = memref.get_global @rate : memref<1xmemref<?xf64>>
+        %127 = affine.load %126[0] : memref<1xmemref<?xf64>>
+        %128 = memref.load %127[%arg2] : memref<?xf64>
+        %129 = memref.get_global @volatility : memref<1xmemref<?xf64>>
+        %130 = affine.load %129[0] : memref<1xmemref<?xf64>>
+        %131 = memref.load %130[%arg2] : memref<?xf64>
+        %132 = memref.get_global @otime : memref<1xmemref<?xf64>>
+        %133 = affine.load %132[0] : memref<1xmemref<?xf64>>
+        %134 = memref.load %133[%arg2] : memref<?xf64>
+        %135 = memref.get_global @prices : memref<1xmemref<?xf64>>
+        %136 = affine.load %135[0] : memref<1xmemref<?xf64>>
+        %137 = memref.load %136[%arg2] : memref<?xf64>
+        %138 = llvm.call @printf(%119, %117, %122, %125, %128, %131, %134, %137) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, i64, f64, f64, f64, f64, f64, f64) -> i32
       }
-      %57 = arith.index_cast %50 : i64 to index
-      %58 = llvm.mlir.addressof @str17 : !llvm.ptr
+      %74 = llvm.mlir.addressof @str26 : !llvm.ptr
+      %75 = llvm.getelementptr %74[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<98 x i8>
+      %76 = llvm.call @printf(%75) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32
+      %77 = "polygeist.memref2pointer"(%42) : (memref<?xi8>) -> !llvm.ptr
+      %78 = func.call @strlen(%77) : (!llvm.ptr) -> i64
+      %79 = arith.addi %78, %c5_i64 : i64
+      %80 = arith.index_cast %79 : i64 to index
+      %alloc_12 = memref.alloc(%80) : memref<?xi8>
+      %81 = "polygeist.memref2pointer"(%alloc_12) : (memref<?xi8>) -> !llvm.ptr
+      %82 = llvm.mlir.zero : !llvm.ptr
+      %83 = llvm.icmp "eq" %81, %82 : !llvm.ptr
+      scf.if %83 {
+        %117 = llvm.mlir.addressof @str27 : !llvm.ptr
+        %118 = "polygeist.pointer2memref"(%117) : (!llvm.ptr) -> memref<?xi8>
+        func.call @die(%118) : (memref<?xi8>) -> ()
+      }
+      %84 = arith.index_cast %78 : i64 to index
+      scf.for %arg2 = %c0 to %84 step %c1 {
+        %117 = memref.load %42[%arg2] : memref<?xi8>
+        memref.store %117, %alloc_12[%arg2] : memref<?xi8>
+      }
+      %85 = arith.index_cast %78 : i64 to index
+      %86 = llvm.mlir.addressof @str28 : !llvm.ptr
       scf.for %arg2 = %c0 to %c5 step %c1 {
-        %89 = arith.index_cast %arg2 : index to i32
-        %90 = llvm.getelementptr %58[%89] : (!llvm.ptr, i32) -> !llvm.ptr, i8
-        %91 = llvm.load %90 : !llvm.ptr -> i8
-        %92 = arith.addi %arg2, %57 : index
-        memref.store %91, %alloc_12[%92] : memref<?xi8>
+        %117 = arith.index_cast %arg2 : index to i32
+        %118 = llvm.getelementptr %86[%117] : (!llvm.ptr, i32) -> !llvm.ptr, i8
+        %119 = llvm.load %118 : !llvm.ptr -> i8
+        %120 = arith.addi %arg2, %85 : index
+        memref.store %119, %alloc_12[%120] : memref<?xi8>
       }
-      %59 = memref.get_global @otype : memref<1xmemref<?xi32>>
-      %60 = affine.load %59[0] : memref<1xmemref<?xi32>>
-      %61 = memref.get_global @sptprice : memref<1xmemref<?xf64>>
-      %62 = affine.load %61[0] : memref<1xmemref<?xf64>>
-      %63 = memref.get_global @strike : memref<1xmemref<?xf64>>
-      %64 = affine.load %63[0] : memref<1xmemref<?xf64>>
-      %65 = memref.get_global @rate : memref<1xmemref<?xf64>>
-      %66 = affine.load %65[0] : memref<1xmemref<?xf64>>
-      %67 = memref.get_global @volatility : memref<1xmemref<?xf64>>
-      %68 = affine.load %67[0] : memref<1xmemref<?xf64>>
-      %69 = memref.get_global @otime : memref<1xmemref<?xf64>>
-      %70 = affine.load %69[0] : memref<1xmemref<?xf64>>
-      %71 = memref.get_global @prices : memref<1xmemref<?xf64>>
-      %72 = affine.load %71[0] : memref<1xmemref<?xf64>>
-      %73 = memref.get_global @numOptions : memref<1xi64>
-      %74 = affine.load %73[0] : memref<1xi64>
-      func.call @writeTextResults(%alloc_12, %60, %62, %64, %66, %68, %70, %72, %74) : (memref<?xi8>, memref<?xi32>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, i64) -> ()
+      %87 = memref.get_global @otype : memref<1xmemref<?xi32>>
+      %88 = affine.load %87[0] : memref<1xmemref<?xi32>>
+      %89 = memref.get_global @sptprice : memref<1xmemref<?xf64>>
+      %90 = affine.load %89[0] : memref<1xmemref<?xf64>>
+      %91 = memref.get_global @strike : memref<1xmemref<?xf64>>
+      %92 = affine.load %91[0] : memref<1xmemref<?xf64>>
+      %93 = memref.get_global @rate : memref<1xmemref<?xf64>>
+      %94 = affine.load %93[0] : memref<1xmemref<?xf64>>
+      %95 = memref.get_global @volatility : memref<1xmemref<?xf64>>
+      %96 = affine.load %95[0] : memref<1xmemref<?xf64>>
+      %97 = memref.get_global @otime : memref<1xmemref<?xf64>>
+      %98 = affine.load %97[0] : memref<1xmemref<?xf64>>
+      %99 = memref.get_global @prices : memref<1xmemref<?xf64>>
+      %100 = affine.load %99[0] : memref<1xmemref<?xf64>>
+      %101 = memref.get_global @numOptions : memref<1xi64>
+      %102 = affine.load %101[0] : memref<1xi64>
+      func.call @writeTextResults(%alloc_12, %88, %90, %92, %94, %96, %98, %100, %102) : (memref<?xi8>, memref<?xi32>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, i64) -> ()
       memref.dealloc %alloc_12 : memref<?xi8>
-      %75 = memref.get_global @sptprice : memref<1xmemref<?xf64>>
-      %76 = affine.load %75[0] : memref<1xmemref<?xf64>>
-      memref.dealloc %76 : memref<?xf64>
-      %77 = memref.get_global @strike : memref<1xmemref<?xf64>>
-      %78 = affine.load %77[0] : memref<1xmemref<?xf64>>
-      memref.dealloc %78 : memref<?xf64>
-      %79 = memref.get_global @rate : memref<1xmemref<?xf64>>
-      %80 = affine.load %79[0] : memref<1xmemref<?xf64>>
-      memref.dealloc %80 : memref<?xf64>
-      %81 = memref.get_global @volatility : memref<1xmemref<?xf64>>
-      %82 = affine.load %81[0] : memref<1xmemref<?xf64>>
-      memref.dealloc %82 : memref<?xf64>
-      %83 = memref.get_global @otime : memref<1xmemref<?xf64>>
-      %84 = affine.load %83[0] : memref<1xmemref<?xf64>>
-      memref.dealloc %84 : memref<?xf64>
-      %85 = memref.get_global @otype : memref<1xmemref<?xi32>>
-      %86 = affine.load %85[0] : memref<1xmemref<?xi32>>
-      memref.dealloc %86 : memref<?xi32>
-      %87 = memref.get_global @prices : memref<1xmemref<?xf64>>
-      %88 = affine.load %87[0] : memref<1xmemref<?xf64>>
-      memref.dealloc %88 : memref<?xf64>
+      %103 = memref.get_global @sptprice : memref<1xmemref<?xf64>>
+      %104 = affine.load %103[0] : memref<1xmemref<?xf64>>
+      memref.dealloc %104 : memref<?xf64>
+      %105 = memref.get_global @strike : memref<1xmemref<?xf64>>
+      %106 = affine.load %105[0] : memref<1xmemref<?xf64>>
+      memref.dealloc %106 : memref<?xf64>
+      %107 = memref.get_global @rate : memref<1xmemref<?xf64>>
+      %108 = affine.load %107[0] : memref<1xmemref<?xf64>>
+      memref.dealloc %108 : memref<?xf64>
+      %109 = memref.get_global @volatility : memref<1xmemref<?xf64>>
+      %110 = affine.load %109[0] : memref<1xmemref<?xf64>>
+      memref.dealloc %110 : memref<?xf64>
+      %111 = memref.get_global @otime : memref<1xmemref<?xf64>>
+      %112 = affine.load %111[0] : memref<1xmemref<?xf64>>
+      memref.dealloc %112 : memref<?xf64>
+      %113 = memref.get_global @otype : memref<1xmemref<?xi32>>
+      %114 = affine.load %113[0] : memref<1xmemref<?xi32>>
+      memref.dealloc %114 : memref<?xi32>
+      %115 = memref.get_global @prices : memref<1xmemref<?xf64>>
+      %116 = affine.load %115[0] : memref<1xmemref<?xf64>>
+      memref.dealloc %116 : memref<?xf64>
     }
     return %8 : i32
   }
   func.func private @atoi(memref<?xi8>) -> i32 attributes {llvm.linkage = #llvm.linkage<external>}
   func.func private @strlen(!llvm.ptr) -> i64
   func.func private @writeTextResults(%arg0: memref<?xi8>, %arg1: memref<?xi32>, %arg2: memref<?xf64>, %arg3: memref<?xf64>, %arg4: memref<?xf64>, %arg5: memref<?xf64>, %arg6: memref<?xf64>, %arg7: memref<?xf64>, %arg8: i64) attributes {llvm.linkage = #llvm.linkage<internal>} {
-    %0 = llvm.mlir.addressof @str19 : !llvm.ptr
+    %0 = llvm.mlir.addressof @str30 : !llvm.ptr
     %1 = "polygeist.pointer2memref"(%0) : (!llvm.ptr) -> memref<?xi8>
     %2 = call @fopen(%arg0, %1) : (memref<?xi8>, memref<?xi8>) -> memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>
     %3 = "polygeist.memref2pointer"(%2) : (memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>) -> !llvm.ptr
     %4 = llvm.mlir.zero : !llvm.ptr
     %5 = llvm.icmp "eq" %3, %4 : !llvm.ptr
     scf.if %5 {
-      %10 = llvm.mlir.addressof @str20 : !llvm.ptr
+      %10 = llvm.mlir.addressof @str31 : !llvm.ptr
       %11 = "polygeist.pointer2memref"(%10) : (!llvm.ptr) -> memref<?xi8>
       func.call @die(%11) : (memref<?xi8>) -> ()
     }
-    %6 = llvm.mlir.addressof @str21 : !llvm.ptr
+    %6 = llvm.mlir.addressof @str32 : !llvm.ptr
     %7 = llvm.getelementptr %6[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<57 x i8>
     %8 = llvm.call @fprintf(%3, %7) vararg(!llvm.func<i32 (ptr, ptr, ...)>) : (!llvm.ptr, !llvm.ptr) -> i32
     call @dump_text_rows(%2, %arg1, %arg2, %arg3, %arg4, %arg5, %arg6, %arg7, %arg8) : (memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>, memref<?xi32>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, memref<?xf64>, i64) -> ()
@@ -918,7 +1037,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     %9 = arith.addi %6, %8 : i32
     return %9 : i32
   }
-  func.func private @__internal_BlkSchlsEqEuroNoDiv(%arg0: f64, %arg1: f64, %arg2: f64, %arg3: f64, %arg4: f64, %arg5: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<internal>} {
+  func.func private @BlkSchlsEqEuroNoDiv(%arg0: f64, %arg1: f64, %arg2: f64, %arg3: f64, %arg4: f64, %arg5: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<internal>} {
     %cst = arith.constant 1.000000e+00 : f64
     %c0_i32 = arith.constant 0 : i32
     %0 = math.sqrt %arg4 : f64
@@ -948,27 +1067,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     %24 = arith.subf %21, %23 : f64
     return %24 : f64
   }
-  func.func private @BlkSchlsEqEuroNoDiv(%arg0: f64, %arg1: f64, %arg2: f64, %arg3: f64, %arg4: f64, %arg5: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<internal>} {
-    %c0_i32 = arith.constant 0 : i32
-    %c1_i32 = arith.constant 1 : i32
-    %0 = arith.cmpi sge, %arg5, %c0_i32 : i32
-    %1 = arith.select %0, %c1_i32, %c0_i32 : i32
-    %2 = arith.index_cast %1 : i32 to index
-    %3 = scf.index_switch %2 -> f64 
-    case 0 {
-      %4 = func.call @__internal_BlkSchlsEqEuroNoDiv(%arg0, %arg1, %arg2, %arg3, %arg4, %arg5) : (f64, f64, f64, f64, f64, i32) -> f64
-      scf.yield %4 : f64
-    }
-    case 1 {
-      %4 = func.call @approx_BlkSchlsEqEuroNoDiv(%arg0, %arg1, %arg2, %arg3, %arg4, %arg5) : (f64, f64, f64, f64, f64, i32) -> f64
-      scf.yield %4 : f64
-    }
-    default {
-      %4 = func.call @__internal_BlkSchlsEqEuroNoDiv(%arg0, %arg1, %arg2, %arg3, %arg4, %arg5) : (f64, f64, f64, f64, f64, i32) -> f64
-      scf.yield %4 : f64
-    }
-    return %3 : f64
-  }
   func.func private @dump_text_rows(%arg0: memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>, %arg1: memref<?xi32>, %arg2: memref<?xf64>, %arg3: memref<?xf64>, %arg4: memref<?xf64>, %arg5: memref<?xf64>, %arg6: memref<?xf64>, %arg7: memref<?xf64>, %arg8: i64) attributes {llvm.linkage = #llvm.linkage<internal>} {
     %c0 = arith.constant 0 : index
     %c1 = arith.constant 1 : index
@@ -976,7 +1074,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     scf.for %arg9 = %c0 to %0 step %c1 {
       %1 = arith.index_cast %arg9 : index to i64
       %2 = "polygeist.memref2pointer"(%arg0) : (memref<?x!llvm.struct<(i32, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, ptr, i32, i32, i64, i16, i8, array<1 x i8>, ptr, i64, ptr, ptr, ptr, ptr, i64, i32, array<20 x i8>)>>) -> !llvm.ptr
-      %3 = llvm.mlir.addressof @str22 : !llvm.ptr
+      %3 = llvm.mlir.addressof @str33 : !llvm.ptr
       %4 = llvm.getelementptr %3[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<44 x i8>
       %5 = memref.load %arg1[%arg9] : memref<?xi32>
       %6 = memref.load %arg2[%arg9] : memref<?xf64>
@@ -990,4 +1088,3 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<i16, dense<16> : 
     return
   }
 }
-

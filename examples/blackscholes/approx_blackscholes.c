@@ -6,10 +6,10 @@
 //   func_name = "compute_cndf",
 //   transform_type = "func_substitute",
 //   num_thresholds = 1 : i32,
-//   thresholds_uppers = array<i32: 10>,
+//   thresholds_uppers = array<i32: 2>,
 //   thresholds_lowers = array<i32: 0>,
 //   decision_values = array<i32: 0, 1>,
-//   thresholds = array<i32: 5>,
+//   thresholds = array<i32: 1>,
 //   decisions = array<i32: 0, 1>
 // }> : () -> ()
 
@@ -22,10 +22,10 @@
 //   func_name = "BlkSchlsEqEuroNoDiv",
 //   transform_type = "func_substitute",
 //   num_thresholds = 1 : i32,
-//   thresholds_uppers = array<i32: 10>,
+//   thresholds_uppers = array<i32: 2>,
 //   thresholds_lowers = array<i32: 0>,
 //   decision_values = array<i32: 0, 1>,
-//   thresholds = array<i32: 5>,
+//   thresholds = array<i32: 1>,
 //   decisions = array<i32: 0, 1>
 // }> : () -> ()
 
@@ -348,6 +348,37 @@ int main(int argc, char **argv){
 
     // Text output (via task-skipping wrapper)
     {
+        printf("\n--- Black-Scholes Results ---\n");
+        printf("Number of options: %zu\n", numOptions);
+
+        if (numOptions > 0) {
+            fptype min_price = prices[0];
+            fptype max_price = prices[0];
+            fptype sum_prices = 0.0;
+
+            for (size_t i = 0; i < numOptions; ++i) {
+                if (prices[i] < min_price) min_price = prices[i];
+                if (prices[i] > max_price) max_price = prices[i];
+                sum_prices += prices[i];
+            }
+            
+            printf("\n--- Price Statistics ---\n");
+            printf("  Average Price: %12.6f\n", sum_prices / numOptions);
+            printf("      Min Price: %12.6f\n", min_price);
+            printf("      Max Price: %12.6f\n", max_price);
+        }
+        
+        printf("\n--- First 20 Option Prices ---\n");
+        printf("  # |       S       |       K       |     Rate      |      Vol      |     Time      |    Price\n");
+        printf("----|---------------|---------------|---------------|---------------|---------------|--------------\n");
+        size_t limit = (numOptions < 20) ? numOptions : 20;
+        for (size_t i = 0; i < limit; ++i) {
+            printf("%3zu | %13.6f | %13.6f | %13.6f | %13.6f | %13.6f | %12.6f\n",
+                i, sptprice[i], strike[i], rate[i], volatility[i], otime[i], prices[i]);
+        }
+        printf("------------------------------------------------------------------------------------------------\n");
+    }
+    {
         size_t len = strlen(outputFile);
         char *txtPath = (char*)malloc(len + 5); // ".txt" + NUL
         if (!txtPath) die("alloc txtPath failed");
@@ -358,6 +389,7 @@ int main(int argc, char **argv){
                          prices, numOptions);
         free(txtPath);
     }
+
 
     // Cleanup
     free(sptprice);
