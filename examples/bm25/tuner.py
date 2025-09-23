@@ -14,7 +14,7 @@ from builtins import range
 from pprint import pprint
 from accuracy import get_gt, compute_similarity, parse_kernel_out
 from dump import dump_data_to_csv
-
+from paths import TUNER, ROOT, BENCH
 
 import opentuner
 from opentuner import (
@@ -29,9 +29,6 @@ from opentuner.measurement.inputmanager import FixedInputManager
 from opentuner.search.objective import ThresholdAccuracyMinimizeTime
 
 log = logging.getLogger("pbtuner")
-TUNER = "/home/hao/Polygeist/opentuner"
-ROOT = "/home/hao/Polygeist"
-BENCH = "bm25"
 
 parser = argparse.ArgumentParser(parents=opentuner.argparsers())
 parser.add_argument("program", help="PetaBricks binary program to autotune")
