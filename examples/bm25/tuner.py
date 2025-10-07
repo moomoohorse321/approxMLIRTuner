@@ -89,7 +89,6 @@ class ApproxTunerInterface(MeasurementInterface):
                     # If modification failed due to validation, set a flag
                     if modification_success is False:
                         self.thresholds_validation_failed = True
-
     def modify_mlir_file(self, key, value, func_name, param_type, param_index):
         """
         Modify the MLIR file based on the configuration parameter
@@ -203,7 +202,7 @@ class ApproxTunerInterface(MeasurementInterface):
         return True
 
     def run_exec(self):
-        run_cmd = ["./test.exec", "1000000", "42", "\"The bm25 is a great query algorithm.\""]
+        run_cmd = ["./test.exec", "./data_large.in", "\"The great wall is such a nice building in China.\""]
         run_result = self.call_program(run_cmd)
         assert run_result["returncode"] == 0
         return run_result
@@ -230,7 +229,7 @@ class ApproxTunerInterface(MeasurementInterface):
 
         gcc_cmd = [
             f"{ROOT}/build/bin/polygeist-opt",
-            f"{ROOT}/tools/cgeist/Test/approxMLIR/approx_{BENCH}.mlir",
+            self.args.mlir_file,
             "-pre-emit-transform",
             "-emit-approx",
             "-config-approx",
@@ -260,7 +259,7 @@ class ApproxTunerInterface(MeasurementInterface):
         # run .exec
         run_result = self.run_exec()
         # print(run_result)
-        output = run_result["stdout"].decode("utf-8")
+        output = run_result["stdout"].decode("utf-8", errors="ignore")
         time, out = parse_kernel_out(output)
 
         result.time = time
@@ -304,7 +303,10 @@ class ApproxTunerInterface(MeasurementInterface):
 
         for name, choices in list(self.choice_sites.items()):
             print("name: ", name, "choices: ", choices)
-            manipulator.add_parameter(LogIntegerParameter(name, choices[0], choices[1]))
+            if choices[1] > 64:
+                manipulator.add_parameter(LogIntegerParameter(name, choices[0], choices[1]))
+            else:
+                manipulator.add_parameter(IntegerParameter(name, choices[0], choices[1]))
         return manipulator
 
     def parse_mlir_annotations(self, mlir_file_path):

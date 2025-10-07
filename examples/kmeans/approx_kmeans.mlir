@@ -1,29 +1,16 @@
-module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : vector<2xi32>>, #dlti.dl_entry<f128, dense<128> : vector<2xi32>>, #dlti.dl_entry<f64, dense<64> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<270>, dense<32> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<271>, dense<32> : vector<4xi32>>, #dlti.dl_entry<i8, dense<8> : vector<2xi32>>, #dlti.dl_entry<i16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i32, dense<32> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr, dense<64> : vector<4xi32>>, #dlti.dl_entry<i1, dense<8> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<272>, dense<64> : vector<4xi32>>, #dlti.dl_entry<i64, dense<64> : vector<2xi32>>, #dlti.dl_entry<f80, dense<128> : vector<2xi32>>, #dlti.dl_entry<"dlti.endianness", "little">, #dlti.dl_entry<"dlti.stack_alignment", 128 : i32>>, llvm.data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", llvm.target_triple = "x86_64-unknown-linux-gnu", "polygeist.target-cpu" = "x86-64", "polygeist.target-features" = "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87", "polygeist.tune-cpu" = "generic"} {
+module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f80, dense<128> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<272>, dense<64> : vector<4xi32>>, #dlti.dl_entry<!llvm.ptr<271>, dense<32> : vector<4xi32>>, #dlti.dl_entry<i64, dense<64> : vector<2xi32>>, #dlti.dl_entry<i32, dense<32> : vector<2xi32>>, #dlti.dl_entry<f16, dense<16> : vector<2xi32>>, #dlti.dl_entry<f64, dense<64> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr<270>, dense<32> : vector<4xi32>>, #dlti.dl_entry<f128, dense<128> : vector<2xi32>>, #dlti.dl_entry<i1, dense<8> : vector<2xi32>>, #dlti.dl_entry<!llvm.ptr, dense<64> : vector<4xi32>>, #dlti.dl_entry<i16, dense<16> : vector<2xi32>>, #dlti.dl_entry<i8, dense<8> : vector<2xi32>>, #dlti.dl_entry<"dlti.stack_alignment", 128 : i32>, #dlti.dl_entry<"dlti.endianness", "little">>, llvm.data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", llvm.target_triple = "x86_64-unknown-linux-gnu", "polygeist.target-cpu" = "x86-64", "polygeist.target-features" = "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87", "polygeist.tune-cpu" = "generic"} {
 
-  // Knob — distance computation (func_substitute)
-  "approxMLIR.util.annotation.decision_tree"() <{
-    func_name = "compute_distance_sq",
-    transform_type = "func_substitute",
-    num_thresholds = 1 : i32,
-    thresholds_uppers = array<i32: 64>,
-    thresholds_lowers = array<i32: 0>,
-    decision_values = array<i32: 0, 1>,
-    thresholds = array<i32: 0>,
-    decisions = array<i32: 1, 0>
-  }> : () -> ()
-  // Required for func_substitute
-  "approxMLIR.util.annotation.convert_to_call"() <{func_name = "compute_distance_sq"}> : () -> ()
 
   // Knob — choosing nearest centroid (loop_perforate over centroids)
   "approxMLIR.util.annotation.decision_tree"() <{
     func_name = "choose_cluster",
     transform_type = "loop_perforate",
     num_thresholds = 1 : i32,
-    thresholds_uppers = array<i32: 16>,
-    thresholds_lowers = array<i32: 0>,
-    decision_values = array<i32: 0, 1>,
-    thresholds = array<i32: 3>,
-    decisions = array<i32: 0, 1>
+    thresholds_uppers = array<i32: 20>,
+    thresholds_lowers = array<i32: 1>,
+    decision_values = array<i32: 0, 1, 2, 3, 4>,
+    thresholds = array<i32: 1>,
+    decisions = array<i32: 2, 4>
   }> : () -> ()
 
   // Knob — assigning points & accumulating (loop_perforate over points)
@@ -31,13 +18,25 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     func_name = "assign_points_and_accumulate",
     transform_type = "loop_perforate",
     num_thresholds = 1 : i32,
-    thresholds_uppers = array<i32: 2000000>,
-    thresholds_lowers = array<i32: 0>,
-    decision_values = array<i32: 0, 1>,
+    thresholds_uppers = array<i32: 20>,
+    thresholds_lowers = array<i32: 1>,
+    decision_values = array<i32: 0, 1, 2, 3, 4>,
     thresholds = array<i32: 1>,
-    decisions = array<i32: 0, 0>
+    decisions = array<i32: 0, 3>
   }> : () -> ()
-  llvm.mlir.global internal constant @str22("\0AK-means completed in %.3f seconds\0A\00") {addr_space = 0 : i32}
+
+  // Knob — run_kmeans_iterations (loop_perforate over iterations)
+  "approxMLIR.util.annotation.decision_tree"() <{
+    func_name = "run_kmeans_iterations",
+    transform_type = "loop_perforate",
+    num_thresholds = 1 : i32,
+    thresholds_uppers = array<i32: 1000000>,
+    thresholds_lowers = array<i32: 1>,
+    decision_values = array<i32: 0, 1, 2, 3, 4>,
+    thresholds = array<i32: 529>,
+    decisions = array<i32: 0, 2>
+  }> : () -> ()
+  llvm.mlir.global internal constant @str22("\0AK-means completed in %.3f ms\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str21("  Max iterations: %d\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str20("  Clusters: %d\0A\00") {addr_space = 0 : i32}
   llvm.mlir.global internal constant @str19("  Dimensions: %d\0A\00") {addr_space = 0 : i32}
@@ -77,30 +76,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     }
     return %1 : f64
   }
-  func.func @approx_compute_distance_sq(%arg0: memref<?xf64>, %arg1: memref<?xf64>, %arg2: i32, %arg3: i32) -> f64 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c0 = arith.constant 0 : index
-    %c2 = arith.constant 2 : index
-    %cst = arith.constant 2.000000e+00 : f64
-    %c1_i32 = arith.constant 1 : i32
-    %cst_0 = arith.constant 0.000000e+00 : f64
-    %0 = arith.index_cast %arg2 : i32 to index
-    %1 = scf.for %arg4 = %c0 to %0 step %c2 iter_args(%arg5 = %cst_0) -> (f64) {
-      %4 = memref.load %arg0[%arg4] : memref<?xf64>
-      %5 = memref.load %arg1[%arg4] : memref<?xf64>
-      %6 = arith.subf %4, %5 : f64
-      %7 = arith.mulf %6, %6 : f64
-      %8 = arith.addf %arg5, %7 : f64
-      scf.yield %8 : f64
-    }
-    %2 = arith.cmpi sgt, %arg2, %c1_i32 : i32
-    %3 = scf.if %2 -> (f64) {
-      %4 = arith.mulf %1, %cst : f64
-      scf.yield %4 : f64
-    } else {
-      scf.yield %1 : f64
-    }
-    return %3 : f64
-  }
   func.func @choose_cluster(%arg0: memref<?xf64>, %arg1: memref<?xmemref<?xf64>>, %arg2: i32, %arg3: i32, %arg4: i32, %arg5: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
     %c1 = arith.constant 1 : index
@@ -134,53 +109,66 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     }
     return
   }
-  func.func @assign_points_and_accumulate(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xmemref<?xf64>>, %arg2: memref<?xi32>, %arg3: memref<?xi32>, %arg4: memref<?xmemref<?xf64>>, %arg5: i32, %arg6: i32, %arg7: i32, %arg8: i32, %arg9: i32, %arg10: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
+  func.func @assign_points_and_accumulate(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xmemref<?xf64>>, %arg2: memref<?xi32>, %arg3: memref<?xi32>, %arg4: memref<?xmemref<?xf64>>, %arg5: i32, %arg6: i32, %arg7: i32, %arg8: i32, %arg9: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
     %c1 = arith.constant 1 : index
     %c1_i32 = arith.constant 1 : i32
     %0 = arith.index_cast %arg5 : i32 to index
-    scf.for %arg11 = %c0 to %0 step %c1 {
-      %1 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-      %2 = func.call @choose_cluster(%1, %arg1, %arg7, %arg6, %arg8, %arg9) : (memref<?xf64>, memref<?xmemref<?xf64>>, i32, i32, i32, i32) -> i32
-      memref.store %2, %arg2[%arg11] : memref<?xi32>
-      %3 = arith.index_cast %2 : i32 to index
-      %4 = memref.load %arg3[%3] : memref<?xi32>
-      %5 = arith.addi %4, %c1_i32 : i32
-      memref.store %5, %arg3[%3] : memref<?xi32>
-      %6 = arith.index_cast %arg6 : i32 to index
-      scf.for %arg12 = %c0 to %6 step %c1 {
-        %7 = memref.load %arg4[%3] : memref<?xmemref<?xf64>>
-        %8 = memref.load %arg0[%arg11] : memref<?xmemref<?xf64>>
-        %9 = memref.load %8[%arg12] : memref<?xf64>
-        %10 = memref.load %7[%arg12] : memref<?xf64>
-        %11 = arith.addf %10, %9 : f64
-        memref.store %11, %7[%arg12] : memref<?xf64>
+    scf.for %arg10 = %c0 to %0 step %c1 {
+      %1 = arith.index_cast %arg10 : index to i32
+      %2 = memref.load %arg0[%arg10] : memref<?xmemref<?xf64>>
+      %3 = func.call @choose_cluster(%2, %arg1, %arg7, %arg6, %1, %arg8) : (memref<?xf64>, memref<?xmemref<?xf64>>, i32, i32, i32, i32) -> i32
+      memref.store %3, %arg2[%arg10] : memref<?xi32>
+      %4 = arith.index_cast %3 : i32 to index
+      %5 = memref.load %arg3[%4] : memref<?xi32>
+      %6 = arith.addi %5, %c1_i32 : i32
+      memref.store %6, %arg3[%4] : memref<?xi32>
+      %7 = arith.index_cast %arg6 : i32 to index
+      scf.for %arg11 = %c0 to %7 step %c1 {
+        %8 = memref.load %arg4[%4] : memref<?xmemref<?xf64>>
+        %9 = memref.load %arg0[%arg10] : memref<?xmemref<?xf64>>
+        %10 = memref.load %9[%arg11] : memref<?xf64>
+        %11 = memref.load %8[%arg11] : memref<?xf64>
+        %12 = arith.addf %11, %10 : f64
+        memref.store %12, %8[%arg11] : memref<?xf64>
       }
     }
     return
   }
-  func.func @recompute_centroids(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xmemref<?xf64>>, %arg2: memref<?xi32>, %arg3: i32, %arg4: i32, %arg5: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
+  func.func @recompute_centroids(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xmemref<?xf64>>, %arg2: memref<?xi32>, %arg3: i32, %arg4: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
     %c1 = arith.constant 1 : index
     %cst = arith.constant 1.000000e+00 : f64
     %c0_i32 = arith.constant 0 : i32
     %0 = arith.index_cast %arg3 : i32 to index
-    scf.for %arg6 = %c0 to %0 step %c1 {
-      %1 = memref.load %arg2[%arg6] : memref<?xi32>
+    scf.for %arg5 = %c0 to %0 step %c1 {
+      %1 = memref.load %arg2[%arg5] : memref<?xi32>
       %2 = arith.cmpi sgt, %1, %c0_i32 : i32
       scf.if %2 {
-        %3 = memref.load %arg2[%arg6] : memref<?xi32>
+        %3 = memref.load %arg2[%arg5] : memref<?xi32>
         %4 = arith.sitofp %3 : i32 to f64
         %5 = arith.divf %cst, %4 : f64
         %6 = arith.index_cast %arg4 : i32 to index
-        scf.for %arg7 = %c0 to %6 step %c1 {
-          %7 = memref.load %arg0[%arg6] : memref<?xmemref<?xf64>>
-          %8 = memref.load %arg1[%arg6] : memref<?xmemref<?xf64>>
-          %9 = memref.load %8[%arg7] : memref<?xf64>
+        scf.for %arg6 = %c0 to %6 step %c1 {
+          %7 = memref.load %arg0[%arg5] : memref<?xmemref<?xf64>>
+          %8 = memref.load %arg1[%arg5] : memref<?xmemref<?xf64>>
+          %9 = memref.load %8[%arg6] : memref<?xf64>
           %10 = arith.mulf %9, %5 : f64
-          memref.store %10, %7[%arg7] : memref<?xf64>
+          memref.store %10, %7[%arg6] : memref<?xf64>
         }
       }
+    }
+    return
+  }
+  func.func @run_kmeans_iterations(%arg0: i32, %arg1: i32, %arg2: i32, %arg3: i32, %arg4: memref<?xmemref<?xf64>>, %arg5: memref<?xmemref<?xf64>>, %arg6: memref<?xi32>, %arg7: memref<?xmemref<?xf64>>, %arg8: memref<?xi32>, %arg9: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    %0 = arith.index_cast %arg0 : i32 to index
+    scf.for %arg10 = %c0 to %0 step %c1 {
+      %1 = arith.index_cast %arg10 : index to i32
+      func.call @reset_accumulators(%arg7, %arg8, %arg1, %arg2) : (memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32) -> ()
+      func.call @assign_points_and_accumulate(%arg4, %arg5, %arg6, %arg8, %arg7, %arg3, %arg2, %arg1, %1, %1) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, memref<?xi32>, memref<?xmemref<?xf64>>, i32, i32, i32, i32, i32) -> ()
+      func.call @recompute_centroids(%arg5, %arg7, %arg8, %arg1, %arg2) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32) -> ()
     }
     return
   }
@@ -191,7 +179,6 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     %c4_i64 = arith.constant 4 : i64
     %c8 = arith.constant 8 : index
     %c8_i64 = arith.constant 8 : i64
-    %c0_i32 = arith.constant 0 : i32
     %0 = arith.extsi %arg5 : i32 to i64
     %1 = arith.muli %0, %c4_i64 : i64
     %2 = arith.index_cast %1 : i64 to index
@@ -205,48 +192,22 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     %alloc_0 = memref.alloc(%8) : memref<?xmemref<?xf64>>
     %9 = arith.index_cast %arg5 : i32 to index
     scf.for %arg7 = %c0 to %9 step %c1 {
-      %15 = arith.extsi %arg4 : i32 to i64
-      %16 = arith.muli %15, %c8_i64 : i64
-      %17 = arith.index_cast %16 : i64 to index
-      %18 = arith.divui %17, %c8 : index
-      %alloc_1 = memref.alloc(%18) : memref<?xf64>
+      %11 = arith.extsi %arg4 : i32 to i64
+      %12 = arith.muli %11, %c8_i64 : i64
+      %13 = arith.index_cast %12 : i64 to index
+      %14 = arith.divui %13, %c8 : index
+      %alloc_1 = memref.alloc(%14) : memref<?xf64>
       memref.store %alloc_1, %alloc_0[%arg7] : memref<?xmemref<?xf64>>
     }
-    %10 = call @decide_distance_state(%arg4) : (i32) -> i32
-    %11 = call @decide_choose_state(%arg5) : (i32) -> i32
-    %12 = call @decide_points_state(%arg3) : (i32) -> i32
-    %13 = arith.index_cast %arg6 : i32 to index
-    scf.for %arg7 = %c0 to %13 step %c1 {
-      func.call @reset_accumulators(%alloc_0, %alloc, %arg5, %arg4) : (memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32) -> ()
-      func.call @assign_points_and_accumulate(%arg0, %arg1, %arg2, %alloc, %alloc_0, %arg3, %arg4, %arg5, %10, %11, %12) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, memref<?xi32>, memref<?xmemref<?xf64>>, i32, i32, i32, i32, i32, i32) -> ()
-      func.call @recompute_centroids(%arg1, %alloc_0, %alloc, %arg5, %arg4, %c0_i32) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32, i32) -> ()
-    }
-    %14 = arith.index_cast %arg5 : i32 to index
-    scf.for %arg7 = %c0 to %14 step %c1 {
-      %15 = memref.load %alloc_0[%arg7] : memref<?xmemref<?xf64>>
-      memref.dealloc %15 : memref<?xf64>
+    call @run_kmeans_iterations(%arg6, %arg5, %arg4, %arg3, %arg0, %arg1, %arg2, %alloc_0, %alloc, %arg3) : (i32, i32, i32, i32, memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, memref<?xmemref<?xf64>>, memref<?xi32>, i32) -> ()
+    %10 = arith.index_cast %arg5 : i32 to index
+    scf.for %arg7 = %c0 to %10 step %c1 {
+      %11 = memref.load %alloc_0[%arg7] : memref<?xmemref<?xf64>>
+      memref.dealloc %11 : memref<?xf64>
     }
     memref.dealloc %alloc_0 : memref<?xmemref<?xf64>>
     memref.dealloc %alloc : memref<?xi32>
     return
-  }
-  func.func private @decide_distance_state(%arg0: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<internal>} {
-    %c16_i32 = arith.constant 16 : i32
-    %0 = arith.cmpi sgt, %arg0, %c16_i32 : i32
-    %1 = arith.extui %0 : i1 to i32
-    return %1 : i32
-  }
-  func.func private @decide_choose_state(%arg0: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<internal>} {
-    %c8_i32 = arith.constant 8 : i32
-    %0 = arith.cmpi sgt, %arg0, %c8_i32 : i32
-    %1 = arith.extui %0 : i1 to i32
-    return %1 : i32
-  }
-  func.func private @decide_points_state(%arg0: i32) -> i32 attributes {llvm.linkage = #llvm.linkage<internal>} {
-    %c10000_i32 = arith.constant 10000 : i32
-    %0 = arith.cmpi sgt, %arg0, %c10000_i32 : i32
-    %1 = arith.extui %0 : i1 to i32
-    return %1 : i32
   }
   func.func @generate_random_data(%arg0: memref<?xmemref<?xf64>>, %arg1: memref<?xmemref<?xf64>>, %arg2: i32, %arg3: i32, %arg4: i32) attributes {llvm.linkage = #llvm.linkage<external>} {
     %c0 = arith.constant 0 : index
@@ -417,6 +378,7 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     %c4 = arith.constant 4 : index
     %c4_i64 = arith.constant 4 : i64
     %cst = arith.constant 1.000000e+06 : f64
+    %cst_0 = arith.constant 1.000000e+03 : f64
     %false = arith.constant false
     %c0_i32 = arith.constant 0 : i32
     %c1_i32 = arith.constant 1 : i32
@@ -425,6 +387,8 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
     %c2_i32 = arith.constant 2 : i32
     %c1000_i32 = arith.constant 1000 : i32
     %0 = llvm.mlir.undef : i32
+    %alloca = memref.alloca() : memref<1x2xi64>
+    %alloca_1 = memref.alloca() : memref<1x2xi64>
     %1:7 = scf.while (%arg2 = %c1_i32, %arg3 = %c20_i32, %arg4 = %c5_i32, %arg5 = %c2_i32, %arg6 = %c1000_i32, %arg7 = %true, %arg8 = %0, %arg9 = %true) : (i32, i32, i32, i32, i32, i1, i32, i1) -> (i32, i32, i32, i32, i1, i32, i32) {
       %3 = arith.cmpi slt, %arg2, %arg0 : i32
       %4 = arith.andi %3, %arg9 : i1
@@ -594,12 +558,12 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
       %alloc = memref.alloc(%23) : memref<?xmemref<?xf64>>
       %24 = arith.index_cast %1#3 : i32 to index
       scf.for %arg2 = %c0 to %24 step %c1 {
-        %46 = arith.extsi %1#2 : i32 to i64
-        %47 = arith.muli %46, %c8_i64 : i64
-        %48 = arith.index_cast %47 : i64 to index
-        %49 = arith.divui %48, %c8 : index
-        %alloc_2 = memref.alloc(%49) : memref<?xf64>
-        memref.store %alloc_2, %alloc[%arg2] : memref<?xmemref<?xf64>>
+        %54 = arith.extsi %1#2 : i32 to i64
+        %55 = arith.muli %54, %c8_i64 : i64
+        %56 = arith.index_cast %55 : i64 to index
+        %57 = arith.divui %56, %c8 : index
+        %alloc_5 = memref.alloc(%57) : memref<?xf64>
+        memref.store %alloc_5, %alloc[%arg2] : memref<?xmemref<?xf64>>
       }
       %25 = "polygeist.typeSize"() <{source = memref<?xf64>}> : () -> index
       %26 = arith.extsi %1#1 : i32 to i64
@@ -607,49 +571,59 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<#dlti.dl_entry<f16, dense<16> : 
       %28 = arith.muli %26, %27 : i64
       %29 = arith.index_cast %28 : i64 to index
       %30 = arith.divui %29, %25 : index
-      %alloc_0 = memref.alloc(%30) : memref<?xmemref<?xf64>>
+      %alloc_2 = memref.alloc(%30) : memref<?xmemref<?xf64>>
       %31 = arith.index_cast %1#1 : i32 to index
       scf.for %arg2 = %c0 to %31 step %c1 {
-        %46 = arith.extsi %1#2 : i32 to i64
-        %47 = arith.muli %46, %c8_i64 : i64
-        %48 = arith.index_cast %47 : i64 to index
-        %49 = arith.divui %48, %c8 : index
-        %alloc_2 = memref.alloc(%49) : memref<?xf64>
-        memref.store %alloc_2, %alloc_0[%arg2] : memref<?xmemref<?xf64>>
+        %54 = arith.extsi %1#2 : i32 to i64
+        %55 = arith.muli %54, %c8_i64 : i64
+        %56 = arith.index_cast %55 : i64 to index
+        %57 = arith.divui %56, %c8 : index
+        %alloc_5 = memref.alloc(%57) : memref<?xf64>
+        memref.store %alloc_5, %alloc_2[%arg2] : memref<?xmemref<?xf64>>
       }
       %32 = arith.extsi %1#3 : i32 to i64
       %33 = arith.muli %32, %c4_i64 : i64
       %34 = arith.index_cast %33 : i64 to index
       %35 = arith.divui %34, %c4 : index
-      %alloc_1 = memref.alloc(%35) : memref<?xi32>
-      func.call @generate_random_data(%alloc, %alloc_0, %1#3, %1#2, %1#1) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, i32, i32, i32) -> ()
-      %36 = func.call @clock() : () -> i64
-      func.call @kmeans_kernel(%alloc, %alloc_0, %alloc_1, %1#3, %1#2, %1#1, %1#0) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32, i32, i32) -> ()
-      %37 = func.call @clock() : () -> i64
-      %38 = arith.subi %37, %36 : i64
-      %39 = arith.sitofp %38 : i64 to f64
-      %40 = arith.divf %39, %cst : f64
-      %41 = llvm.mlir.addressof @str22 : !llvm.ptr
-      %42 = llvm.getelementptr %41[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<36 x i8>
-      %43 = llvm.call @printf(%42, %40) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, f64) -> i32
-      func.call @print_results(%alloc, %alloc_0, %alloc_1, %1#3, %1#2, %1#1) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32, i32) -> ()
-      %44 = arith.index_cast %1#3 : i32 to index
-      scf.for %arg2 = %c0 to %44 step %c1 {
-        %46 = memref.load %alloc[%arg2] : memref<?xmemref<?xf64>>
-        memref.dealloc %46 : memref<?xf64>
+      %alloc_3 = memref.alloc(%35) : memref<?xi32>
+      func.call @generate_random_data(%alloc, %alloc_2, %1#3, %1#2, %1#1) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, i32, i32, i32) -> ()
+      %cast = memref.cast %alloca_1 : memref<1x2xi64> to memref<?x2xi64>
+      %36 = func.call @clock_gettime(%c1_i32, %cast) : (i32, memref<?x2xi64>) -> i32
+      func.call @kmeans_kernel(%alloc, %alloc_2, %alloc_3, %1#3, %1#2, %1#1, %1#0) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32, i32, i32) -> ()
+      %cast_4 = memref.cast %alloca : memref<1x2xi64> to memref<?x2xi64>
+      %37 = func.call @clock_gettime(%c1_i32, %cast_4) : (i32, memref<?x2xi64>) -> i32
+      %38 = affine.load %alloca[0, 0] : memref<1x2xi64>
+      %39 = affine.load %alloca_1[0, 0] : memref<1x2xi64>
+      %40 = arith.subi %38, %39 : i64
+      %41 = arith.sitofp %40 : i64 to f64
+      %42 = arith.mulf %41, %cst_0 : f64
+      %43 = affine.load %alloca[0, 1] : memref<1x2xi64>
+      %44 = affine.load %alloca_1[0, 1] : memref<1x2xi64>
+      %45 = arith.subi %43, %44 : i64
+      %46 = arith.sitofp %45 : i64 to f64
+      %47 = arith.divf %46, %cst : f64
+      %48 = arith.addf %42, %47 : f64
+      %49 = llvm.mlir.addressof @str22 : !llvm.ptr
+      %50 = llvm.getelementptr %49[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<31 x i8>
+      %51 = llvm.call @printf(%50, %48) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr, f64) -> i32
+      func.call @print_results(%alloc, %alloc_2, %alloc_3, %1#3, %1#2, %1#1) : (memref<?xmemref<?xf64>>, memref<?xmemref<?xf64>>, memref<?xi32>, i32, i32, i32) -> ()
+      %52 = arith.index_cast %1#3 : i32 to index
+      scf.for %arg2 = %c0 to %52 step %c1 {
+        %54 = memref.load %alloc[%arg2] : memref<?xmemref<?xf64>>
+        memref.dealloc %54 : memref<?xf64>
       }
       memref.dealloc %alloc : memref<?xmemref<?xf64>>
-      %45 = arith.index_cast %1#1 : i32 to index
-      scf.for %arg2 = %c0 to %45 step %c1 {
-        %46 = memref.load %alloc_0[%arg2] : memref<?xmemref<?xf64>>
-        memref.dealloc %46 : memref<?xf64>
+      %53 = arith.index_cast %1#1 : i32 to index
+      scf.for %arg2 = %c0 to %53 step %c1 {
+        %54 = memref.load %alloc_2[%arg2] : memref<?xmemref<?xf64>>
+        memref.dealloc %54 : memref<?xf64>
       }
-      memref.dealloc %alloc_0 : memref<?xmemref<?xf64>>
-      memref.dealloc %alloc_1 : memref<?xi32>
+      memref.dealloc %alloc_2 : memref<?xmemref<?xf64>>
+      memref.dealloc %alloc_3 : memref<?xi32>
     }
     return %2 : i32
   }
   func.func private @strcmp(memref<?xi8>, memref<?xi8>) -> i32 attributes {llvm.linkage = #llvm.linkage<external>}
   func.func private @atoi(memref<?xi8>) -> i32 attributes {llvm.linkage = #llvm.linkage<external>}
-  func.func private @clock() -> i64 attributes {llvm.linkage = #llvm.linkage<external>}
+  func.func private @clock_gettime(i32, memref<?x2xi64>) -> i32 attributes {llvm.linkage = #llvm.linkage<external>}
 }
