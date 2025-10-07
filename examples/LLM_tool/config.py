@@ -1,4 +1,5 @@
-def config(config_file="pagerank.settings"):
+from paths import TUNER, ROOT, BENCH
+def config(config_file=f"{BENCH}.settings"):
     """
     An example of *.settings
     {
@@ -12,11 +13,12 @@ def config(config_file="pagerank.settings"):
     import sys
 
     # Set global environment variables
-    os.environ["BENCH"] = "blackscholes"
-    os.environ["ROOT"] = "/home/yimu3/PolygeistSample"
+    os.environ["BENCH"] = BENCH
+    os.environ["ROOT"] = ROOT
+    
 
     # Add the project root to Python path
-    sys.path.insert(0, "/home/yimu3/approxMLIRTuner")
+    sys.path.insert(0, TUNER)
     accuracy = np.linspace(0.6, 1.0, 4)
     for acc in accuracy:
         print("Accuracy: ", acc)
@@ -24,9 +26,8 @@ def config(config_file="pagerank.settings"):
             import json
 
             json.dump({"accuracy": acc}, f)
-        # run the pagerank program
         os.system(
-            f"PYTHONPATH=/home/yimu3/approxMLIRTuner python tuner.py pagerank --mlir-file /Users/yi/Desktop/PolygeistSample/tools/cgeist/Test/approxMLIR/approx_blackscholes.mlir --database opentuner.db --stop-after=1200"
+            f"PYTHONPATH={TUNER} python tuner.py {BENCH}  --database opentuner.db --stop-after=1200"
         )
 
 
