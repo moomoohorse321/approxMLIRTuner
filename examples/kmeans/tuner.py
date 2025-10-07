@@ -230,7 +230,7 @@ class ApproxTunerInterface(MeasurementInterface):
 
         gcc_cmd = [
             f"{ROOT}/build/bin/polygeist-opt",
-            f"{ROOT}/tools/cgeist/Test/approxMLIR/approx_{BENCH}.mlir",
+            self.args.mlir_file,
             "-pre-emit-transform",
             "-emit-approx",
             "-config-approx",
@@ -304,7 +304,10 @@ class ApproxTunerInterface(MeasurementInterface):
 
         for name, choices in list(self.choice_sites.items()):
             print("name: ", name, "choices: ", choices)
-            manipulator.add_parameter(LogIntegerParameter(name, choices[0], choices[1]))
+            if choices[1] > 64:
+                manipulator.add_parameter(LogIntegerParameter(name, choices[0], choices[1]))
+            else:
+                manipulator.add_parameter(IntegerParameter(name, choices[0], choices[1]))
         return manipulator
 
     def parse_mlir_annotations(self, mlir_file_path):

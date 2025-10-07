@@ -89,7 +89,7 @@ def get_gt(fname = "gt.txt"):
     """
     Reads the ground truth output from a file and parses it.
     """
-    with open(fname, "r") as f:
+    with open(fname, "r", errors="ignore") as f:
         s = f.read()
         time, gt = parse_kernel_out(s)
     return gt
@@ -119,6 +119,7 @@ if __name__ == "__main__":
 
     # 2. Get the parsed ground truth data.
     gt_scores = get_gt()
+    
     print(f"Ground Truth Scores: {gt_scores}")
 
     # 3. Create a dummy approximate output with some errors.

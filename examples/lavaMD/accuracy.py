@@ -1,14 +1,9 @@
-# accuracy.py — lavaMD 专用相似度计算（保留函数名）
-
 import os
 import struct
 import math
 import re
 
-# ============= 二进制结果读取（lavaMD 的 result.txt） =============
-
 def _read_size_t(f):
-    """兼容 8B/4B 的 size_t 头。"""
     pos = f.tell()
     raw = f.read(8)
     if len(raw) == 8:
@@ -24,11 +19,6 @@ def _read_size_t(f):
     return n4
 
 def _read_result_bin(path):
-    """
-    读取 lavaMD 的二进制结果：
-      [size_t N] + N 个 FOUR_VECTOR (v,x,y,z)（double）
-    返回 dict: {"V": [v0..vN-1], "F": [x0,y0,z0, x1,y1,z1, ...]}
-    """
     with open(path, "rb") as f:
         N = _read_size_t(f)
         rec_size = 8 * 4  # FOUR_VECTOR: 4*double
@@ -52,43 +42,24 @@ def _l2(vec):
 def _dot(a, b):
     return sum(x*y for x, y in zip(a, b))
 
-
-# ============= 公开 API（函数名不变） =============
-
 def parse_pr_data(data_string):
     """
-    lavaMD 的 stdout 只有时间，不含逐项数据。
-    本函数：
-      1) 从 stdout 提取执行时间（支持 "Total execution time: X seconds"、"Elapsed: X"）
-      2) 读取环境变量 RESULT_FILE 或默认 ./result.txt，解析成 {"V":[...], "F":[...]}
-         并作为第二个返回值（供 compute_similarity 使用）
-    返回: (execution_time: float|None, lavamd_values: dict)
+        It took from result.txt
     """
     execution_time = None
 
     if data_string:
         lines = data_string.splitlines()
-        time_patts = [
-            re.compile(r"^\s*Total execution time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*(?:seconds)?\s*$"),
-            re.compile(r"^\s*Elapsed:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*$"),
-            re.compile(r"^\s*Time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*(?:seconds)?\s*$"),
-        ]
+            
         for line in lines:
             s = line.strip()
-            for tp in time_patts:
-                m = tp.match(s)
-                if m:
-                    try:
-                        execution_time = float(m.group(1))
-                    except ValueError:
-                        execution_time = None
-                    break
-            if execution_time is not None:
+            m = re.compile(r"^\s*Total execution time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*(?:ms)?\s*$").match(s)
+            if m:
+                execution_time = float(m.group(1))
                 break
 
     result_path = os.environ.get("RESULT_FILE", "result.txt")
     if not os.path.isfile(result_path):
-        # 没有结果文件也要保持返回结构一致
         return execution_time, {"V": [], "F": []}
 
     lavamd_values = _read_result_bin(result_path)
@@ -96,17 +67,10 @@ def parse_pr_data(data_string):
 
 
 def get_gt(fname="gt.txt"):
-    """
-    读取基线（GT）文件。GT 也是 lavaMD 的二进制结果文件，只是命名为 gt.txt。
-    """
     return _read_result_bin(fname)
 
 
 def compute_similarity(gt_values, cand_values):
-    """
-    lavaMD 相似度：融合 相对L2误差（势能V + 力向量F） 与 力向量余弦相似度。
-    输出 ∈ [0,1]，越接近 1 越相似。
-    """
     # 基本健壮性
     if not isinstance(gt_values, dict) or not isinstance(cand_values, dict):
         return 0.0

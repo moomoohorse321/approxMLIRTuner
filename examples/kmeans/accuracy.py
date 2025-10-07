@@ -15,17 +15,22 @@ def parse_kernel_out(data_string):
         centroids is a dictionary mapping a cluster index to a list of its
         coordinate values.
     """
-    time = -1.0
+    time_seconds = -1.0
     centroids = {}
 
-    # Regex to find the computation time in seconds.
-    time_pattern = re.compile(r"K-means completed in ([\d.]+) seconds")
+    # Regex to find the computation time in milliseconds (ms).
+    time_pattern = re.compile(r"K-means completed in ([\d.]+) ms")
     
     # Regex to capture the centroid index and its coordinates.
-    # It handles variable dimensions by finding all floating-point numbers in the line.
     centroid_pattern = re.compile(r"Centroid (\d+): \((.*?)\)")
 
     for line in data_string.splitlines():
+        # Check for the final time line
+        time_match = time_pattern.search(line)
+        if time_match:
+            time_ms = float(time_match.group(1))
+            continue
+
         # Check for centroid lines
         centroid_match = centroid_pattern.search(line)
         if centroid_match:
@@ -34,24 +39,19 @@ def parse_kernel_out(data_string):
             coords_str = centroid_match.group(2)
             coords = [float(c) for c in re.findall(r"[\d.-]+", coords_str)]
             centroids[cluster_index] = coords
-            continue
-
-        # Check for the final time line
-        time_match = time_pattern.search(line)
-        if time_match:
-            time = float(time_match.group(1))
             
-    # The returned data structure 'D' is the dictionary of final centroids.
-    return time, centroids
+    return time_ms, centroids
 
 
 def compute_similarity(gt_out, approx_out):
     """
     Computes the accuracy between ground truth and approximated k-means outputs.
 
-    Accuracy is based on the L2 norm of the final centroid coordinates. Since
-    cluster labels can be permuted between runs, this function first finds the
-    optimal matching between gt_out and approx_out centroids that minimizes
+    This function implements the L2 norm accuracy formula from your paper:
+    Accuracy = 1 - (||y_exact - y_approx||_2 / ||y_exact||_2)
+
+    Since cluster labels can be permuted between runs, this function first finds
+    the optimal matching between gt_out and approx_out centroids that minimizes
     the total Euclidean distance.
 
     Args:
@@ -64,16 +64,13 @@ def compute_similarity(gt_out, approx_out):
     if len(gt_out) != len(approx_out) or not gt_out:
         return 0.0
 
-    # Sort the centroid keys to ensure consistent processing order
     gt_keys = sorted(gt_out.keys())
     approx_keys = sorted(approx_out.keys())
 
-    # --- Find the best permutation of approximate centroids to match ground truth ---
-    # This handles cases where cluster labels are swapped (e.g., gt cluster 0 matches approx cluster 3)
+    # --- Find the best permutation to match ground truth ---
     best_mapping = {}
     min_total_dist = float('inf')
 
-    # Iterate through all possible permutations of approximate cluster assignments
     for p in itertools.permutations(approx_keys):
         current_mapping = dict(zip(gt_keys, p))
         current_total_dist = 0
@@ -87,8 +84,6 @@ def compute_similarity(gt_out, approx_out):
 
     # --- Construct flattened vectors based on the best matching ---
     y_exact = [coord for key in gt_keys for coord in gt_out[key]]
-    
-    # Use the best_mapping to order the approximate centroids correctly
     y_approx = [coord for key in gt_keys for coord in approx_out[best_mapping[key]]]
 
     # --- Calculate accuracy using the L2 norm formula ---
@@ -110,15 +105,25 @@ def get_gt(fname="gt.txt"):
     """
     Reads the ground truth output from a file and parses it.
     """
-    with open(fname, "r") as f:
-        s = f.read()
-        time, gt = parse_kernel_out(s)
-    return gt
+    try:
+        with open(fname, "r") as f:
+            s = f.read()
+            _, gt = parse_kernel_out(s)
+        return gt
+    except FileNotFoundError:
+        print(f"Error: Ground truth file '{fname}' not found.")
+        return None
 
 if __name__ == "__main__":
-    # 1. Create a dummy ground truth file from the example output.
+    # 1. Create a dummy ground truth file from your example output.
     gt_data_string = """
-    K-means completed in 1.593 seconds
+    Running K-means with:
+     Points: 1000000
+     Dimensions: 2
+     Clusters: 10
+     Max iterations: 20
+
+    K-means completed in 1757.674 ms
     Final centroids:
     Centroid 0: (82.54, 84.45)
     Centroid 1: (47.23, 15.19)
@@ -129,22 +134,24 @@ if __name__ == "__main__":
 
     # 2. Get the parsed ground truth data.
     gt_centroids = get_gt()
-    print(f"Ground Truth Centroids: {gt_centroids}")
+    if gt_centroids:
+        print(f"Ground Truth Centroids: {gt_centroids}")
 
-    # 3. Create a dummy approximate output. Note that Centroid 0 and 1 are swapped
-    #    and have slight errors compared to the ground truth.
-    approx_data_string = """
-    K-means completed in 0.850 seconds
-    Final centroids:
-    Centroid 0: (47.30, 15.25)
-    Centroid 1: (82.60, 84.50)
-    Centroid 2: (45.10, 56.80)
-    """
-    
-    # 4. Parse the approximate output and compute similarity.
-    approx_time, approx_centroids = parse_kernel_out(approx_data_string)
-    print(f"Approximate Centroids: {approx_centroids}")
-    print(f"Approximate Time: {approx_time} s")
-    
-    accuracy = compute_similarity(gt_centroids, approx_centroids)
-    print(f"\nCalculated Accuracy: {accuracy:.6f}")
+        # 3. Create a dummy approximate output. 
+        #    Note: Centroid 0 and 1 are swapped and have slight errors.
+        approx_data_string = """
+        K-means completed in 850.123 ms
+        Final centroids:
+        Centroid 0: (47.30, 15.25)
+        Centroid 1: (82.60, 84.50)
+        Centroid 2: (45.10, 56.80)
+        """
+        
+        # 4. Parse the approximate output.
+        approx_time, approx_centroids = parse_kernel_out(approx_data_string)
+        print(f"Approximate Centroids: {approx_centroids}")
+        print(f"Approximate Time: {approx_time:.3f} s")
+        
+        # 5. Compute and display the accuracy.
+        accuracy = compute_similarity(gt_centroids, approx_centroids)
+        print(f"\nCalculated Accuracy: {accuracy:.6f}")
